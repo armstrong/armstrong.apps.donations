@@ -2,14 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-
-class DonorManager(models.Manager):
-    def create_for_user(self, user):
-        return self.create(
-            user=user,
-            first_name=user.first_name,
-            last_name=user.last_name
-        )
+from . import managers
 
 
 class Donor(models.Model):
@@ -17,7 +10,7 @@ class Donor(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
 
-    objects = DonorManager()
+    objects = managers.DonorManager()
 
 
 class DonationType(models.Model):
@@ -67,15 +60,6 @@ class PromoCode(models.Model):
         return amount * (1 - self.amount / 100.0)
 
 
-class DonationManager(models.Manager):
-    def create(self, **kwargs):
-        if "donation_type" in kwargs and not "amount" in kwargs:
-            kwargs["amount"] = kwargs["donation_type"].amount
-        if "code" in kwargs:
-            kwargs["amount"] = kwargs["code"].calculate(kwargs["amount"])
-        return super(DonationManager, self).create(**kwargs)
-
-
 class Donation(models.Model):
     donor = models.ForeignKey(Donor)
     donation_type = models.ForeignKey(DonationType, null=True, blank=True)
@@ -83,4 +67,4 @@ class Donation(models.Model):
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
 
-    objects = DonationManager()
+    objects = managers.DonationManager()

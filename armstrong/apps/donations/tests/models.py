@@ -9,9 +9,21 @@ from ..models import (Donor, Donation, DonationType, PromoCode)
 class DonorTestCase(TestCase):
     def test_can_be_created_from_user_with_profile(self):
         user = generate_random_user()
-        donor = Donor.objects.create_for_user(user)
+        donor = Donor.objects.create(user=user)
         self.assertEqual(donor.first_name, user.first_name)
         self.assertEqual(donor.last_name, user.last_name)
+
+    def test_first_name_is_given_priority_if_specified_with_user(self):
+        user = generate_random_user()
+        first_name = "Bob (%d)" % random.randint(1, 10)
+        d = Donor.objects.create(user=user, first_name=first_name)
+        self.assertEqual(first_name, d.first_name)
+
+    def test_last_name_is_given_priority_if_specified_with_user(self):
+        user = generate_random_user()
+        last_name = "Bob (%d)" % random.randint(1, 10)
+        d = Donor.objects.create(user=user, last_name=last_name)
+        self.assertEqual(last_name, d.last_name)
 
 
 class DonationTypeTestCase(TestCase):

@@ -2,15 +2,19 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from . import managers
-
 
 class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
 
-    objects = managers.DonorManager()
+    def save(self, **kwargs):
+        if self.user:
+            if not self.first_name:
+                self.first_name = self.user.first_name
+            if not self.last_name:
+                self.last_name = self.user.last_name
+        super(Donor, self).save(**kwargs)
 
 
 class DonationType(models.Model):
@@ -67,4 +71,9 @@ class Donation(models.Model):
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
 
-    objects = managers.DonationManager()
+    def save(self, **kwargs):
+        if self.donation_type and not self.amount:
+            self.amount = self.donation_type.amount
+        if self.code:
+            self.amount = self.code.calculate(self.amount)
+        return super(Donation, self).save(**kwargs)

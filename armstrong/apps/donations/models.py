@@ -5,15 +5,11 @@ from django.utils.translation import ugettext_lazy as _
 
 class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=250)
 
     def save(self, **kwargs):
-        if self.user:
-            if not self.first_name:
-                self.first_name = self.user.first_name
-            if not self.last_name:
-                self.last_name = self.user.last_name
+        if self.user and not self.name:
+            self.name = "%s %s" % (self.user.first_name, self.user.last_name)
         super(Donor, self).save(**kwargs)
 
 

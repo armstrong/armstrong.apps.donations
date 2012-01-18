@@ -3,7 +3,7 @@ import random
 from ._utils import generate_random_user
 from ._utils import TestCase
 
-from ..models import (Donor, Donation, DonationType, PromoCode)
+from ..models import (Donor, Donation, DonationType)
 
 
 class DonorTestCase(TestCase):
@@ -44,25 +44,6 @@ class DonationTypeTestCase(TestCase):
 
 
 class DonationWorkFlowTestCase(TestCase):
-    @property
-    def random_donor(self):
-        return Donor.objects.create(name="Bob Example")
-
-    @property
-    def random_type(self):
-        return DonationType.objects.create(
-            name="Basic $20/year",
-            yearly=20
-        )
-
-    @property
-    def random_discount(self):
-        r = random.randint(10, 30)
-        return PromoCode.objects.create(
-            code="for_testing",
-            amount=r
-        )
-
     def test_donations_can_be_free_form_amounts(self):
         donor = self.random_donor
 

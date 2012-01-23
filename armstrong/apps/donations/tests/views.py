@@ -69,8 +69,10 @@ class DonationFormViewTestCase(TestCase):
         data.update(address_formset)
 
         self.client.post(self.url, data)
-        models.DonorMailingAddress.objects.get(**address_kwargs)
-        self.assertTrue(True, "was able to find address")
+        address = models.DonorMailingAddress.objects.get(**address_kwargs)
+        donor = models.Donor.objects.get(name=donor_name)
+        self.assertEqual(address, donor.address)
+        self.assertEqual(None, donor.mailing_address)
 
     def test_saves_mailing_address_if_present(self):
         donor_name = self.random_donor_name
@@ -93,4 +95,25 @@ class DonationFormViewTestCase(TestCase):
         mailing_address = models.DonorMailingAddress.objects.get(
                 **mailing_address_kwargs)
         self.assertNotEqual(address, mailing_address)
-        self.assertTrue(True, "was able to find address")
+
+        donor = models.Donor.objects.get(name=donor_name)
+        self.assertEqual(address, donor.address)
+        self.assertEqual(mailing_address, donor.mailing_address)
+
+    @property
+    def random_post_data(self):
+        donor_name = self.random_donor_name
+        address_kwargs = self.random_address_kwargs
+        address_formset = self.get_data_as_formset(address_kwargs)
+        data = {
+            "name": donor_name,
+        }
+        data.update(address_formset)
+        return data
+
+    def test_saves_mailing_address_if_same_as_billing_is_checked(self):
+        data = self.random_post_data
+        data["mailing_same_as_billing"] = u"1"
+        self.client.post(self.url, data)
+        donor = models.Donor.objects.get(name=data["name"])
+        self.assertEqual(donor.address, donor.mailing_address)

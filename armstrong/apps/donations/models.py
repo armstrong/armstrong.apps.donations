@@ -17,11 +17,11 @@ class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
     name = models.CharField(max_length=250)
     address = models.ForeignKey(DonorMailingAddress, related_name="addresses",
-            null=True)
+            null=True, blank=True)
     mailing_address = models.ForeignKey(DonorMailingAddress,
-            related_name="mailing_addresses", null=True)
+            related_name="mailing_addresses", null=True, blank=True)
     # TODO: Make sure form widget is USPhoneNumberField
-    phone = models.CharField(max_length=10)
+    phone = models.CharField(max_length=10, null=True, blank=True)
 
     def save(self, **kwargs):
         if self.user and not self.name:

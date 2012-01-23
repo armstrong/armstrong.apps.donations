@@ -74,8 +74,7 @@ class DonationFormView(TemplateView):
         return self.add_data_if_write_request(kwargs)
 
     def get_donor_form(self):
-        # return forms.DonorForm(**self.get_form_kwargs("donor"))
-        return ""
+        return forms.DonorForm(**self.get_form_kwargs("donor"))
 
     def get_donation_form(self):
         # return forms.DonationForm(**self.get_form_kwargs("donation"))
@@ -99,10 +98,17 @@ class DonationFormView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
     def post(self, request, *args, **kwargs):
-        donor = models.Donor.objects.create(name=request.POST["name"])
+        # TODO: validate and send to the appropriate places
+        # TODO: clean up so Travis doesn't cry
+        donor_form = self.get_donor_form()
+        donor = donor_form.save()
         address_formset = forms.DonorMailingAddressFormset(data=request.POST)
         addresses = address_formset.save()
         if len(addresses):
             donor.address = addresses[0]
+            if len(addresses) is 2:
+                donor.mailing_address = addresses[1]
+            elif "mailing_same_as_billing" in request.POST:
+                donor.mailing_address = donor.address
             donor.save()
         return HttpResponse("")

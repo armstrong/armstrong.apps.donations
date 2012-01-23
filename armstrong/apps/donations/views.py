@@ -46,7 +46,6 @@ class DonationFormView(TemplateView):
     def set_form_action_url(self, name):
         self._form_action_url = reverse(name)
 
-
     _success_url = ""
 
     @property

@@ -1,11 +1,27 @@
 from django.contrib.auth.models import User
+from django.contrib.localflavor.us import models as us
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
+
+class DonorMailingAddress(models.Model):
+    """
+    Address associated with a ``Donor``
+    """
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=20)
+    state = us.USStateField()
 
 
 class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
     name = models.CharField(max_length=250)
+    address = models.ForeignKey(DonorMailingAddress, related_name="addresses",
+            null=True)
+    mailing_address = models.ForeignKey(DonorMailingAddress,
+            related_name="mailing_addresses", null=True)
+    # TODO: Make sure form widget is USPhoneNumberField
+    phone = models.CharField(max_length=10)
 
     def save(self, **kwargs):
         if self.user and not self.name:

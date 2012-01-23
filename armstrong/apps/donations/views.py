@@ -1,4 +1,5 @@
 from cbv_utils.views import (InlineFormsetMixin, ProcessInlineFormsetView)
+from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
 from django.views.generic.detail import (
         SingleObjectTemplateResponseMixin)
@@ -22,10 +23,69 @@ class InlineCreateView(SingleObjectTemplateResponseMixin,
 
 
 class LandingView(TemplateView):
-    template_name = "donations/landing.html"
+    template_name = "armstrong/donations/landing.html"
 
 
-class DonationFormView(InlineCreateView):
-    form_class = forms.DonorForm
-    inline_formset_class = forms.DonationInlineFormset
-    template_name = "donations/donation.html"
+class DonationFormView(TemplateView):
+    template_name = "armstrong/donations/donation.html"
+
+    donor_form_initial = {}
+
+    @property
+    def is_write_request(self):
+        return self.request.method in ("POST", "PUT")
+
+    _form_action_url = ""
+
+    @property
+    def form_action_url(self):
+        return self._form_action_url
+
+    @form_action_url.setter
+    def set_form_action_url(self, name):
+        self._form_action_url = reverse(name)
+
+    def add_data_if_write_request(self, kwargs):
+        if self.is_write_request:
+            kwargs.update({
+                "data": self.request.POST,
+                "files": self.request.FILES,
+            })
+        return kwargs
+
+    def get_form_kwargs(self, key):
+        kwargs = {"initial": getattr(self, "%s_form_initial" % key)}
+        return self.add_data_if_write_request(kwargs)
+
+    def get_formset_kwargs(self, key):
+        # TODO: make initial work
+        kwargs = {"initial": []}
+        return self.add_data_if_write_request(kwargs)
+
+    def get_donor_form(self):
+        # return forms.DonorForm(**self.get_form_kwargs("donor"))
+        return ""
+
+    def get_donation_form(self):
+        # return forms.DonationForm(**self.get_form_kwargs("donation"))
+        return ""
+
+    def get_address_formset(self):
+        # return forms.AddressFormset(**self.get_formset_kwargs("address"))
+        return ""
+
+    def get_context_data(self, **kwargs):
+        context = {
+            "form_action_url": self.form_action_url,
+            "donor_form": self.get_donor_form(),
+            "donation_form": self.get_donation_form(),
+            "address_formset": self.get_address_formset(),
+        }
+        context.update(kwargs)
+        return context
+
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        pass

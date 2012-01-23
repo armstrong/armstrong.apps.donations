@@ -21,18 +21,22 @@ class DonationFormPage(TestCase):
         self.assertEqual(200, response.status_code, msg="sanity check")
         return response
 
-    def assert_in_context(self, response, name, expected_type=None):
+    def assert_in_context(self, response, name):
         self.assertTrue(name in response.context,
                 msg="%s was not in the context")
+
+    def assert_type_in_context(self, response, name, expected_type):
+        self.assert_in_context(response, name)
         self.assertEqual(response.context[name].__class__, expected_type,
-                msg="%s was in the context, but not equal to %s" % (
+                msg="%s in the context, but does not have a class of %s" % (
                         name, expected_type.__name__))
 
-    def test_adds_donor_form_to_context(self):
-        response = self.get_donation_form_response()
-        self.assert_in_context(response, "form", forms.DonorForm)
+    def assert_value_in_context(self, response, name, expected_value):
+        self.assert_in_context(response, name)
+        self.assertEqual(response.context[name], expected_value,
+                msg="%s in the context, but not equal to '%s'" % (
+                        name, expected_value))
 
-    def test_adds_donation_inline_formset_to_context(self):
+    def test_adds_form_action_url_to_context(self):
         response = self.get_donation_form_response()
-        self.assert_in_context(response, "inline_formset",
-                forms.DonationInlineFormset)
+        self.assert_value_in_context(response, "form_action_url", "")

@@ -2,7 +2,7 @@ from armstrong.dev.tests.utils.base import ArmstrongTestCase
 from armstrong.dev.tests.utils.users import generate_random_user
 import random
 
-from ..models import (Donor, DonationType, PromoCode)
+from ..models import (DonorMailingAddress, Donor, DonationType, PromoCode)
 
 
 class TestCase(ArmstrongTestCase):
@@ -11,8 +11,20 @@ class TestCase(ArmstrongTestCase):
         return "Bob Example (%d)" % random.randint(100, 200)
 
     @property
+    def random_address(self):
+        return DonorMailingAddress.objects.create(
+            address="123 Some St",
+            city="Anytown",
+            state="TX"
+        )
+
+    @property
     def random_donor(self):
-        return Donor.objects.create(name=self.random_donor_name)
+        return Donor.objects.create(
+            name=self.random_donor_name,
+            address=self.random_address,
+            mailing_address=self.random_address
+        )
 
     @property
     def random_type(self):

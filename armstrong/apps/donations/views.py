@@ -1,10 +1,12 @@
 from cbv_utils.views import (InlineFormsetMixin, ProcessInlineFormsetView)
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.views.generic import TemplateView
 from django.views.generic.detail import (
         SingleObjectTemplateResponseMixin)
 
 from . import forms
+from . import models
 
 
 class BaseInlineCreateView(InlineFormsetMixin, ProcessInlineFormsetView):
@@ -28,7 +30,6 @@ class LandingView(TemplateView):
 
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
-
     donor_form_initial = {}
 
     @property
@@ -44,6 +45,17 @@ class DonationFormView(TemplateView):
     @form_action_url.setter
     def set_form_action_url(self, name):
         self._form_action_url = reverse(name)
+
+
+    _success_url = ""
+
+    @property
+    def success_url(self):
+        return self._success_url
+
+    @success_url.setter
+    def set_success_url(self, name):
+        self._success_url = reverse(name)
 
     def add_data_if_write_request(self, kwargs):
         if self.is_write_request:
@@ -88,4 +100,10 @@ class DonationFormView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
     def post(self, request, *args, **kwargs):
-        pass
+        donor = models.Donor.objects.create(name=request.POST["name"])
+        address_formset = forms.DonorMailingAddressFormset(data=request.POST)
+        addresses = address_formset.save()
+        if len(addresses):
+            donor.address = addresses[0]
+            donor.save()
+        return HttpResponse("")

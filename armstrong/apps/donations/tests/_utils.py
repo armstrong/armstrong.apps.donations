@@ -11,12 +11,16 @@ class TestCase(ArmstrongTestCase):
         return "Bob Example (%d)" % random.randint(100, 200)
 
     @property
+    def random_address_kwargs(self):
+        return {
+            "address": "%d Some St" % random.randint(1000, 2000),
+            "city": "Anytown",
+            "state": "TX",
+        }
+
+    @property
     def random_address(self):
-        return DonorMailingAddress.objects.create(
-            address="123 Some St",
-            city="Anytown",
-            state="TX"
-        )
+        return DonorMailingAddress.objects.create(**self.random_address_kwargs)
 
     @property
     def random_donor(self):
@@ -45,16 +49,19 @@ class TestCase(ArmstrongTestCase):
     def random_amount(self):
         return random.randint(1, 100)
 
-    def get_data_as_formset(self, data, prefix="form", total_forms=u"1",
+    def get_data_as_formset(self, data, prefix="form", total_forms=None,
             initial_forms=u"0", max_num_forms=u""):
+        # TODO: write tests for this
+        if type(data) is dict:
+            data = [data, ]
+        if not total_forms:
+            total_forms = len(data)
         r = {
             "%s-TOTAL_FORMS" % prefix: total_forms,
             "%s-INITIAL_FORMS" % prefix: initial_forms,
             "%s-MAX_NUM_FORMS" % prefix: max_num_forms,
         }
-        if type(data) is dict:
-            data = [data, ]
         for idx, a in zip(range(len(data)), data):
             for k, v in a.items():
-                r["%s-0-%s" % (prefix, k)] = v
+                r["%s-%d-%s" % (prefix, idx, k)] = v
         return r

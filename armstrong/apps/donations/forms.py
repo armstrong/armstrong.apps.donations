@@ -1,10 +1,12 @@
 from django import forms
 from django.conf import settings
 from django.contrib.localflavor.us import forms as us
+from django.forms.models import modelformset_factory
 
 from .constants import MONTH_CHOICES
 from .constants import YEAR_CHOICES
 
+from . import models
 from . import text
 
 state_kwargs_fields = {}
@@ -42,10 +44,8 @@ class CreditCardDonationForm(BaseDonationForm):
         pass
 
 
-class AddressForm(forms.Form):
-    address = forms.CharField(widget=forms.Textarea)
-    city = forms.CharField()
-    state = us.USStateField(widget=us.USStateSelect(), **state_kwargs_fields)
-    zip_code = us.USZipCodeField()
+class DonorForm(forms.ModelForm):
+    class Meta:
+        model = models.Donor
 
-# TODO: Add formset
+DonorMailingAddressFormset = modelformset_factory(models.DonorMailingAddress)

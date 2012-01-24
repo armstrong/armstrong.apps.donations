@@ -1,11 +1,17 @@
 from armstrong.dev.tests.utils.base import ArmstrongTestCase
 from armstrong.dev.tests.utils.users import generate_random_user
+from django.test.client import RequestFactory
 import random
 
 from ..models import (DonorAddress, Donor, DonationType, PromoCode)
 
 
 class TestCase(ArmstrongTestCase):
+    def setUp(self):
+        super(TestCase, self).setUp()
+        # TODO: move this to armstrong.dev
+        self.factory = RequestFactory()
+
     @property
     def random_donor_name(self):
         return "Bob Example (%d)" % random.randint(100, 200)

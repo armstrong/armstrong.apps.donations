@@ -19,6 +19,7 @@ class BaseDonationFormViewTestCase(TestCase):
         return reverse(self.view_name)
 
     def setUp(self):
+        super(BaseDonationFormViewTestCase, self).setUp()
         # TODO: move this to armstrong.dev
         self.client = Client()
 

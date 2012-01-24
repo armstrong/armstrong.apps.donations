@@ -8,9 +8,11 @@ from ._utils import TestCase
 
 from .. import forms
 from .. import models
+from .. import views
 
 
 class BaseDonationFormViewTestCase(TestCase):
+    view_class = views.DonationFormView
     view_name = "donations_form"
 
     @property
@@ -46,6 +48,11 @@ class BaseDonationFormViewTestCase(TestCase):
                 msg="%s in the context, but not equal to '%s'" % (
                         name, expected_value))
 
+    def get_view_object(self):
+        view = self.view_class()
+        view.request = self.factory.get(self.url)
+        return view
+
     def get_response(self):
         response = self.client.get(self.url)
         self.assertEqual(200, response.status_code, msg="sanity check")
@@ -79,6 +86,12 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
     def test_adds_donation_formset_to_context(self, response):
         self.assert_type_in_context(response, "donation_form",
                 forms.BaseDonationForm)
+
+    def test_get_donation_form_returns_credit_card_form_by_default(self):
+        # TODO: make sure in "default" state
+        view = self.get_view_object()
+        donation_form = view.get_donation_form()
+        self.assertIsA(donation_form, forms.CreditCardDonationForm)
 
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):

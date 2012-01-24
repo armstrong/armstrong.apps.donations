@@ -67,6 +67,11 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
     def test_adds_donor_form_to_context(self, response):
         self.assert_type_in_context(response, "donor_form", forms.DonorForm)
 
+    @get_response
+    def test_adds_address_formset_to_context(self, response):
+        self.assert_type_in_context(response, "address_formset",
+                forms.DonorAddressFormset)
+
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     @property
     def random_post_data(self):
@@ -105,7 +110,7 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         data.update(address_formset)
 
         self.client.post(self.url, data)
-        address = models.DonorMailingAddress.objects.get(**address_kwargs)
+        address = models.DonorAddress.objects.get(**address_kwargs)
         donor = models.Donor.objects.get(name=donor_name)
         self.assertEqual(address, donor.address)
         self.assertEqual(None, donor.mailing_address)
@@ -123,12 +128,12 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         }
         data.update(address_formset)
 
-        self.assertEqual(0, len(models.DonorMailingAddress.objects.all()),
+        self.assertEqual(0, len(models.DonorAddress.objects.all()),
             msg="sanity check")
         self.client.post(self.url, data)
-        self.assertEqual(2, len(models.DonorMailingAddress.objects.all()))
-        address = models.DonorMailingAddress.objects.get(**address_kwargs)
-        mailing_address = models.DonorMailingAddress.objects.get(
+        self.assertEqual(2, len(models.DonorAddress.objects.all()))
+        address = models.DonorAddress.objects.get(**address_kwargs)
+        mailing_address = models.DonorAddress.objects.get(
                 **mailing_address_kwargs)
         self.assertNotEqual(address, mailing_address)
 

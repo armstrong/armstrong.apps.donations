@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-class DonorMailingAddress(models.Model):
+class DonorAddress(models.Model):
     """
     Address associated with a ``Donor``
     """
@@ -16,9 +16,9 @@ class DonorMailingAddress(models.Model):
 class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
     name = models.CharField(max_length=250)
-    address = models.ForeignKey(DonorMailingAddress, related_name="addresses",
+    address = models.ForeignKey(DonorAddress, related_name="addresses",
             null=True, blank=True)
-    mailing_address = models.ForeignKey(DonorMailingAddress,
+    mailing_address = models.ForeignKey(DonorAddress,
             related_name="mailing_addresses", null=True, blank=True)
     # TODO: Make sure form widget is USPhoneNumberField
     phone = models.CharField(max_length=10, null=True, blank=True)

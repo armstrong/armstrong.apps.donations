@@ -62,8 +62,7 @@ class DonationFormView(TemplateView):
         return ""
 
     def get_address_formset(self):
-        # return forms.AddressFormset(**self.get_formset_kwargs("address"))
-        return ""
+        return forms.DonorAddressFormset(**self.get_formset_kwargs("address"))
 
     def get_context_data(self, **kwargs):
         context = {
@@ -83,7 +82,7 @@ class DonationFormView(TemplateView):
         # TODO: clean up so Travis doesn't cry
         donor_form = self.get_donor_form()
         donor = donor_form.save()
-        address_formset = forms.DonorMailingAddressFormset(data=request.POST)
+        address_formset = forms.DonorAddressFormset(data=request.POST)
         addresses = address_formset.save()
         if len(addresses):
             donor.address = addresses[0]

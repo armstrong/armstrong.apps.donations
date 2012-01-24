@@ -48,4 +48,4 @@ class DonorForm(forms.ModelForm):
     class Meta:
         model = models.Donor
 
-DonorMailingAddressFormset = modelformset_factory(models.DonorMailingAddress)
+DonorAddressFormset = modelformset_factory(models.DonorAddress)

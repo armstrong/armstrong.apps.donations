@@ -2,7 +2,7 @@ from armstrong.dev.tests.utils.base import ArmstrongTestCase
 from armstrong.dev.tests.utils.users import generate_random_user
 import random
 
-from ..models import (DonorMailingAddress, Donor, DonationType, PromoCode)
+from ..models import (DonorAddress, Donor, DonationType, PromoCode)
 
 
 class TestCase(ArmstrongTestCase):
@@ -20,7 +20,7 @@ class TestCase(ArmstrongTestCase):
 
     @property
     def random_address(self):
-        return DonorMailingAddress.objects.create(**self.random_address_kwargs)
+        return DonorAddress.objects.create(**self.random_address_kwargs)
 
     @property
     def random_donor(self):

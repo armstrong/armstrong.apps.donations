@@ -1,27 +1,8 @@
-from cbv_utils.views import (InlineFormsetMixin, ProcessInlineFormsetView)
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-from django.views.generic.detail import (
-        SingleObjectTemplateResponseMixin)
 
 from . import forms
-from . import models
-
-
-class BaseInlineCreateView(InlineFormsetMixin, ProcessInlineFormsetView):
-    def get(self, request, *args, **kwargs):
-        self.object = None
-        return super(BaseInlineCreateView, self).get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        return super(BaseInlineCreateView, self).post(request, *args, **kwargs)
-
-
-class InlineCreateView(SingleObjectTemplateResponseMixin,
-        BaseInlineCreateView):
-    pass
 
 
 class LandingView(TemplateView):

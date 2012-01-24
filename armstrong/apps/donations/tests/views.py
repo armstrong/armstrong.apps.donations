@@ -33,7 +33,7 @@ class BaseDonationFormViewTestCase(TestCase):
 
     def assert_type_in_context(self, response, name, expected_type):
         self.assert_in_context(response, name)
-        self.assertEqual(response.context[name].__class__, expected_type,
+        self.assertTrue(isinstance(response.context[name], expected_type),
                 msg="%s in the context, but does not have a class of %s" % (
                         name, expected_type.__name__))
 

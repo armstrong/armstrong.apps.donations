@@ -72,6 +72,12 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         self.assert_type_in_context(response, "address_formset",
                 forms.DonorAddressFormset)
 
+    @get_response
+    def test_adds_donation_formset_to_context(self, response):
+        self.assert_type_in_context(response, "donation_form",
+                forms.BaseDonationForm)
+
+
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     @property
     def random_post_data(self):

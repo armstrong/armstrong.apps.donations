@@ -46,7 +46,7 @@ class DonationFormView(TemplateView):
         return kwargs
 
     def get_form_kwargs(self, key):
-        kwargs = {"initial": getattr(self, "%s_form_initial" % key)}
+        kwargs = {"initial": getattr(self, "%s_form_initial" % key, None)}
         return self.add_data_if_write_request(kwargs)
 
     def get_formset_kwargs(self, key):
@@ -58,8 +58,7 @@ class DonationFormView(TemplateView):
         return forms.DonorForm(**self.get_form_kwargs("donor"))
 
     def get_donation_form(self):
-        # return forms.DonationForm(**self.get_form_kwargs("donation"))
-        return ""
+        return forms.CreditCardDonationForm(self.get_form_kwargs("donation"))
 
     def get_address_formset(self):
         return forms.DonorAddressFormset(**self.get_formset_kwargs("address"))

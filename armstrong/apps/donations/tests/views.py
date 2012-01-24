@@ -19,7 +19,9 @@ class BaseDonationFormViewTestCase(TestCase):
         return reverse(self.view_name)
 
     def setUp(self):
+        # TODO: move this to armstrong.dev
         self.client = Client()
+
         # TODO: make this based off of class name and move into armstrong.dev
         settings.TEMPLATE_DIRS = (
             os.path.join(os.path.dirname(__file__), "_templates"),

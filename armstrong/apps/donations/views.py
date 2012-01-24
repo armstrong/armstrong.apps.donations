@@ -12,6 +12,7 @@ class LandingView(TemplateView):
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
     donor_form_initial = {}
+    donation_form_class = forms.CreditCardDonationForm
 
     @property
     def is_write_request(self):
@@ -57,8 +58,13 @@ class DonationFormView(TemplateView):
     def get_donor_form(self):
         return forms.DonorForm(**self.get_form_kwargs("donor"))
 
+    def get_donation_form_class(self):
+        # TODO: make this configurable based on backend
+        return self.donation_form_class
+
     def get_donation_form(self):
-        return forms.CreditCardDonationForm(self.get_form_kwargs("donation"))
+        donation_form_class = self.get_donation_form_class()
+        return donation_form_class(self.get_form_kwargs("donation"))
 
     def get_address_formset(self):
         return forms.DonorAddressFormset(**self.get_formset_kwargs("address"))

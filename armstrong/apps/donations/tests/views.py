@@ -69,13 +69,14 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         data.update(address_formset)
         return data
 
-    def _test_saves_donation_on_post_with_minimal_information(self):
+    def test_saves_donation_on_post_with_minimal_information(self):
         donor_name = self.random_donor_name
         random_amount = self.random_amount
         data = {
             "name": donor_name,
             "amount": random_amount,
         }
+        data.update(self.get_data_as_formset())
 
         # sanity check
         self.assertRaises(models.Donor.DoesNotExist,

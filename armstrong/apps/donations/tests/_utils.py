@@ -49,8 +49,10 @@ class TestCase(ArmstrongTestCase):
     def random_amount(self):
         return random.randint(1, 100)
 
-    def get_data_as_formset(self, data, prefix="form", total_forms=None,
+    def get_data_as_formset(self, data=None, prefix="form", total_forms=None,
             initial_forms=u"0", max_num_forms=u""):
+        if data is None:
+            data = []
         # TODO: write tests for this
         if type(data) is dict:
             data = [data, ]

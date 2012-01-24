@@ -6,6 +6,7 @@ from unittest import expectedFailure
 
 from ._utils import TestCase
 
+from .. import forms
 from .. import models
 
 
@@ -51,6 +52,10 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
     def test_adds_form_action_url_to_context(self):
         response = self.get_response()
         self.assert_value_in_context(response, "form_action_url", "")
+
+    def test_adds_donor_form_to_context(self):
+        response = self.get_response()
+        self.assert_type_in_context(response, "donor_form", forms.DonorForm)
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     @property

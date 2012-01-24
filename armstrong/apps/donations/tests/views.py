@@ -48,13 +48,23 @@ class BaseDonationFormViewTestCase(TestCase):
         self.assertEqual(200, response.status_code, msg="sanity check")
         return response
 
+
+# TODO: move to armstrong.dev
+def get_response(func):
+    from functools import wraps
+    @wraps(func)
+    def inner(self):
+        func(self, self.get_response())
+    return inner
+
+
 class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
-    def test_adds_form_action_url_to_context(self):
-        response = self.get_response()
+    @get_response
+    def test_adds_form_action_url_to_context(self, response):
         self.assert_value_in_context(response, "form_action_url", "")
 
-    def test_adds_donor_form_to_context(self):
-        response = self.get_response()
+    @get_response
+    def test_adds_donor_form_to_context(self, response):
         self.assert_type_in_context(response, "donor_form", forms.DonorForm)
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):

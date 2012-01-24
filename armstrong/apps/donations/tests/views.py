@@ -9,23 +9,24 @@ from ._utils import TestCase
 from .. import models
 
 
-class DonationFormViewTestCase(TestCase):
-    def setUp(self):
-        self.client = Client()
-        settings.TEMPLATE_DIRS = (
-            os.path.join(os.path.dirname(__file__), "_templates"),
-        )
+class BaseDonationFormViewTestCase(TestCase):
+    view_name = "donations_form"
 
     @property
     def url(self):
-        return reverse("donations_form")
+        # TODO: move this into armstrong.dev
+        return reverse(self.view_name)
 
-    def get_donation_form_response(self):
-        response = self.client.get(self.url)
-        self.assertEqual(200, response.status_code, msg="sanity check")
-        return response
+    def setUp(self):
+        self.client = Client()
+        # TODO: make this based off of class name and move into armstrong.dev
+        settings.TEMPLATE_DIRS = (
+            os.path.join(os.path.dirname(__file__), "_templates"),
+        )
+        self.client
 
     def assert_in_context(self, response, name):
+        # TODO: move this into armstrong.dev
         self.assertTrue(name in response.context,
                 msg="%s was not in the context")
 
@@ -41,9 +42,27 @@ class DonationFormViewTestCase(TestCase):
                 msg="%s in the context, but not equal to '%s'" % (
                         name, expected_value))
 
+    def get_response(self):
+        response = self.client.get(self.url)
+        self.assertEqual(200, response.status_code, msg="sanity check")
+        return response
+
+class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
     def test_adds_form_action_url_to_context(self):
-        response = self.get_donation_form_response()
+        response = self.get_response()
         self.assert_value_in_context(response, "form_action_url", "")
+
+class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
+    @property
+    def random_post_data(self):
+        donor_name = self.random_donor_name
+        address_kwargs = self.random_address_kwargs
+        address_formset = self.get_data_as_formset(address_kwargs)
+        data = {
+            "name": donor_name,
+        }
+        data.update(address_formset)
+        return data
 
     def _test_saves_donation_on_post_with_minimal_information(self):
         donor_name = self.random_donor_name
@@ -101,16 +120,6 @@ class DonationFormViewTestCase(TestCase):
         self.assertEqual(address, donor.address)
         self.assertEqual(mailing_address, donor.mailing_address)
 
-    @property
-    def random_post_data(self):
-        donor_name = self.random_donor_name
-        address_kwargs = self.random_address_kwargs
-        address_formset = self.get_data_as_formset(address_kwargs)
-        data = {
-            "name": donor_name,
-        }
-        data.update(address_formset)
-        return data
 
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):
         data = self.random_post_data

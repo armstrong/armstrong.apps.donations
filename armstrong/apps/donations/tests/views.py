@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client
 import os
+from unittest import expectedFailure
 
 from ._utils import TestCase
 
@@ -117,3 +118,23 @@ class DonationFormViewTestCase(TestCase):
         self.client.post(self.url, data)
         donor = models.Donor.objects.get(name=data["name"])
         self.assertEqual(donor.address, donor.mailing_address)
+
+    @expectedFailure
+    def test_saves_donation_information(self):
+        self.fail()
+
+    @expectedFailure
+    def test_displays_errors_on_donor_validation_error(self):
+        self.fail()
+
+    @expectedFailure
+    def test_displays_errors_on_address_validation_error(self):
+        self.fail()
+
+    @expectedFailure
+    def test_redirects_to_success_url_on_success(self):
+        self.fail()
+
+    @expectedFailure
+    def test_displays_errors_when_payment_method_authorization_fails(self):
+        self.fail()

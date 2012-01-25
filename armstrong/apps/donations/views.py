@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.views.generic import TemplateView
 
 from . import forms
@@ -7,6 +7,10 @@ from . import forms
 
 class LandingView(TemplateView):
     template_name = "armstrong/donations/landing.html"
+
+
+class ThanksView(TemplateView):
+    template_name = "armstrong/donations/thanks.html"
 
 
 class DonationFormView(TemplateView):
@@ -28,10 +32,12 @@ class DonationFormView(TemplateView):
     def set_form_action_url(self, name):
         self._form_action_url = reverse(name)
 
-    _success_url = ""
+    _success_url = None
 
     @property
     def success_url(self):
+        if not self._success_url:
+            self._success_url = reverse("donations_thanks")
         return self._success_url
 
     @success_url.setter
@@ -98,4 +104,4 @@ class DonationFormView(TemplateView):
             elif "mailing_same_as_billing" in request.POST:
                 donor.mailing_address = donor.address
             donor.save()
-        return HttpResponse("")
+        return HttpResponseRedirect(self.success_url)

@@ -186,6 +186,11 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         donor = models.Donor.objects.get(name=data["name"])
         self.assertEqual(donor.address, donor.mailing_address)
 
+    def test_redirects_to_success_url_after_successful_save(self):
+        data = self.random_post_data
+        response = self.client.post(self.url, data)
+        self.assertRedirects(response, reverse("donations_thanks"))
+
     @expectedFailure
     def test_saves_donation_information(self):
         self.fail()

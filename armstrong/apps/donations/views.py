@@ -86,6 +86,8 @@ class DonationFormView(TemplateView):
         # TODO: validate and send to the appropriate places
         # TODO: clean up so Travis doesn't cry
         donor_form = self.get_donor_form()
+        if not donor_form.is_valid():
+            return self.render_to_response(self.get_context_data())
         donor = donor_form.save()
         address_formset = forms.DonorAddressFormset(data=request.POST)
         addresses = address_formset.save()

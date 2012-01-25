@@ -48,6 +48,12 @@ class BaseDonationFormViewTestCase(TestCase):
                 msg="%s in the context, but not equal to '%s'" % (
                         name, expected_value))
 
+    def assert_template(self, template, response):
+        template_names = [a.name for a in response.templates]
+        self.assertTrue(template in template_names,
+                msg="%s not found in templates: %s" % (
+                        template, response.templates))
+
     def get_view_object(self):
         view = self.view_class()
         view.request = self.factory.get(self.url)
@@ -163,7 +169,6 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assertEqual(address, donor.address)
         self.assertEqual(mailing_address, donor.mailing_address)
 
-
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):
         data = self.random_post_data
         data["mailing_same_as_billing"] = u"1"
@@ -175,9 +180,11 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     def test_saves_donation_information(self):
         self.fail()
 
-    @expectedFailure
     def test_displays_errors_on_donor_validation_error(self):
-        self.fail()
+        data = self.random_post_data
+        del data["name"]
+        response = self.client.post(self.url, data)
+        self.assert_template("armstrong/donations/donation.html", response)
 
     @expectedFailure
     def test_displays_errors_on_address_validation_error(self):

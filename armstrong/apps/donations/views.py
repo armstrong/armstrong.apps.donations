@@ -93,7 +93,7 @@ class DonationFormView(TemplateView):
         # TODO: clean up so Travis doesn't cry
         donor_form = self.get_donor_form()
         if not donor_form.is_valid():
-            return self.render_to_response(self.get_context_data())
+            return self.forms_are_invalid()
         donor = donor_form.save()
         address_formset = forms.DonorAddressFormset(data=request.POST)
         addresses = address_formset.save()
@@ -105,3 +105,6 @@ class DonationFormView(TemplateView):
                 donor.mailing_address = donor.address
             donor.save()
         return HttpResponseRedirect(self.success_url)
+
+    def forms_are_invalid(self, **kwargs):
+        return self.render_to_response(self.get_context_data())

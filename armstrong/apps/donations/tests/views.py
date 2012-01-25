@@ -34,7 +34,7 @@ class BaseDonationFormViewTestCase(TestCase):
     def assert_in_context(self, response, name):
         # TODO: move this into armstrong.dev
         self.assertTrue(name in response.context,
-                msg="%s was not in the context")
+                msg="%s was not in the context" % name)
 
     def assert_type_in_context(self, response, name, expected_type):
         self.assert_in_context(response, name)

@@ -94,7 +94,7 @@ class DonationFormView(TemplateView):
         donor_form = self.get_donor_form()
         if not donor_form.is_valid():
             return self.forms_are_invalid()
-        donor = donor_form.save()
+        donor = donor_form.save(commit=False)
         address_formset = forms.DonorAddressFormset(data=request.POST)
         addresses = address_formset.save()
         if len(addresses):
@@ -103,7 +103,7 @@ class DonationFormView(TemplateView):
                 donor.mailing_address = addresses[1]
             elif "mailing_same_as_billing" in request.POST:
                 donor.mailing_address = donor.address
-            donor.save()
+        donor.save()
         return HttpResponseRedirect(self.success_url)
 
     def forms_are_invalid(self, **kwargs):

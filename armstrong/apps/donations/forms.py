@@ -47,5 +47,6 @@ class CreditCardDonationForm(BaseDonationForm):
 class DonorForm(forms.ModelForm):
     class Meta:
         model = models.Donor
+        excludes = ("address", "mailing_address", )
 
 DonorAddressFormset = modelformset_factory(models.DonorAddress)

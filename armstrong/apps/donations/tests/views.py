@@ -179,6 +179,18 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assertEqual(address, donor.address)
         self.assertEqual(mailing_address, donor.mailing_address)
 
+    @expectedFailure
+    def test_only_saves_donor_once(self):
+        """This will pass if #17594 is merged in"""
+        data = self.random_post_data
+        with self.assertNumQueries(2):
+            self.client.post(self.url, data)
+
+    def test_only_saves_donor_once_with_buggy_modelformset(self):
+        data = self.random_post_data
+        with self.assertNumQueries(3, msg="will fail if #17594 is merged"):
+            self.client.post(self.url, data)
+
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):
         data = self.random_post_data
         data["mailing_same_as_billing"] = u"1"

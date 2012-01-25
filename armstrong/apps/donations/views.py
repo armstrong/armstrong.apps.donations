@@ -104,7 +104,10 @@ class DonationFormView(TemplateView):
             elif "mailing_same_as_billing" in request.POST:
                 donor.mailing_address = donor.address
         donor.save()
-        return HttpResponseRedirect(self.success_url)
+        return self.forms_are_valid()
 
     def forms_are_invalid(self, **kwargs):
         return self.render_to_response(self.get_context_data())
+
+    def forms_are_valid(self, **kwargs):
+        return HttpResponseRedirect(self.success_url)

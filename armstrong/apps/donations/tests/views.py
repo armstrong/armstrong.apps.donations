@@ -54,6 +54,16 @@ class BaseDonationFormViewTestCase(TestCase):
                 msg="%s not found in templates: %s" % (
                         template, response.templates))
 
+    def assert_form_has_errors(self, response, form_name, error_fields=None):
+        self.assert_in_context(response, form_name)
+        form = response.context[form_name]
+        self.assertNotEqual(form.errors, [],
+                msg="%s.errors was empty?" % form_name)
+        if error_fields:
+            for field in error_fields:
+                self.assertTrue(field in form.errors,
+                        msg="%s not in the errors" % field)
+
     def get_view_object(self):
         view = self.view_class()
         view.request = self.factory.get(self.url)
@@ -185,6 +195,7 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         del data["name"]
         response = self.client.post(self.url, data)
         self.assert_template("armstrong/donations/donation.html", response)
+        self.assert_form_has_errors(response, "donor_form", ["name", ])
 
     @expectedFailure
     def test_displays_errors_on_address_validation_error(self):

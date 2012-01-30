@@ -134,6 +134,7 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
             "expiration_month": "%02d" % now.month,
             "expiration_year": "%04d" % (now + datetime.timedelta(365)).year,
             "name": self.random_donor_name,
+            "mailing_same_as_billing": u"1",
         }
         data.update(kwargs)
         return data
@@ -173,7 +174,7 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         address = models.DonorAddress.objects.get(**address_kwargs)
         donor = models.Donor.objects.get(name=donor_name)
         self.assertEqual(address, donor.address)
-        self.assertEqual(None, donor.mailing_address)
+        self.assertEqual(address, donor.mailing_address)
 
     def test_saves_mailing_address_if_present(self):
         donor_name = self.random_donor_name
@@ -233,6 +234,19 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     def test_displays_errors_on_address_validation_error(self):
         data = self.random_post_data
         data["form-0-address"] = ""
+        response = self.client.post(self.url, data)
+        self.assert_template("armstrong/donations/donation.html", response)
+        self.assert_form_has_errors(response, "address_formset")
+
+    def test_displays_errors_on_mailing_address_validation_error(self):
+        data = self.random_post_data
+        address_formset = self.get_data_as_formset([
+            self.random_address_kwargs,
+            self.random_address_kwargs,
+        ])
+        data.update(address_formset)
+        del data["mailing_same_as_billing"]
+        data["form-1-address"] = ""
         response = self.client.post(self.url, data)
         self.assert_template("armstrong/donations/donation.html", response)
         self.assert_form_has_errors(response, "address_formset")

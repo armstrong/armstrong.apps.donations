@@ -101,7 +101,8 @@ class DonationFormView(TemplateView):
             return self.forms_are_invalid()
         donor = donor_form.save(commit=False)
         donation_form = self.get_donation_form()
-        donation_form.is_valid()  # TODO: redirect on error
+        if not donation_form.is_valid():
+            return self.forms_are_invalid()
         donation = donation_form.save(commit=False)
         address_formset = forms.DonorAddressFormset(data=request.POST)
         if not address_formset.is_valid():

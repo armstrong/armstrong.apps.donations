@@ -92,10 +92,6 @@ class DonationFormView(TemplateView):
     def post(self, request, *args, **kwargs):
         # TODO: validate and send to the appropriate places
         # TODO: clean up so Travis doesn't cry
-        # TODO: determine how to proceed with a mailing_same_as_billing and
-        #       DonorAddressFormset mismatch.  Possibly move logic into the
-        #       Formset so it can handle it appropriately instead of doing it
-        #       here in the view.
         donor_form = self.get_donor_form()
         if not donor_form.is_valid():
             return self.forms_are_invalid()
@@ -107,6 +103,11 @@ class DonationFormView(TemplateView):
         address_formset = forms.DonorAddressFormset(data=request.POST)
         if not address_formset.is_valid():
             return self.forms_are_invalid()
+
+        # TODO: determine how to proceed with a mailing_same_as_billing and
+        #       DonorAddressFormset mismatch.  Possibly move logic into the
+        #       Formset so it can handle it appropriately instead of doing it
+        #       here in the view.
         addresses = address_formset.save()
         if len(addresses):
             donor.address = addresses[0]

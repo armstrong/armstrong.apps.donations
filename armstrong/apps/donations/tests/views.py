@@ -223,10 +223,6 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         response = self.client.post(self.url, data)
         self.assertRedirects(response, reverse("donations_thanks"))
 
-    @expectedFailure
-    def test_saves_donation_information(self):
-        self.fail()
-
     def test_displays_errors_on_donor_validation_error(self):
         data = self.random_post_data
         del data["name"]

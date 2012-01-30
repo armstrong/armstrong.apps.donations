@@ -230,9 +230,12 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assert_template("armstrong/donations/donation.html", response)
         self.assert_form_has_errors(response, "donor_form", ["name", ])
 
-    @expectedFailure
     def test_displays_errors_on_address_validation_error(self):
-        self.fail()
+        data = self.random_post_data
+        data["form-0-address"] = ""
+        response = self.client.post(self.url, data)
+        self.assert_template("armstrong/donations/donation.html", response)
+        self.assert_form_has_errors(response, "address_formset")
 
     @expectedFailure
     def test_redirects_to_success_url_on_success(self):

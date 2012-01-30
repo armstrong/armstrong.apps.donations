@@ -252,9 +252,5 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assert_form_has_errors(response, "address_formset")
 
     @expectedFailure
-    def test_redirects_to_success_url_on_success(self):
-        self.fail()
-
-    @expectedFailure
     def test_displays_errors_when_payment_method_authorization_fails(self):
         self.fail()

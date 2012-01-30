@@ -66,11 +66,12 @@ class DonationFormView(TemplateView):
 
     def get_donation_form_class(self):
         # TODO: make this configurable based on backend
+
         return self.donation_form_class
 
     def get_donation_form(self):
         donation_form_class = self.get_donation_form_class()
-        return donation_form_class(self.get_form_kwargs("donation"))
+        return donation_form_class(**self.get_form_kwargs("donation"))
 
     def get_address_formset(self):
         return forms.DonorAddressFormset(**self.get_formset_kwargs("address"))
@@ -95,6 +96,9 @@ class DonationFormView(TemplateView):
         if not donor_form.is_valid():
             return self.forms_are_invalid()
         donor = donor_form.save(commit=False)
+        donation_form = self.get_donation_form()
+        donation_form.is_valid()  # TODO: redirect on error
+        donation = donation_form.save(commit=False)
         address_formset = forms.DonorAddressFormset(data=request.POST)
         addresses = address_formset.save()
         if len(addresses):
@@ -104,6 +108,8 @@ class DonationFormView(TemplateView):
             elif "mailing_same_as_billing" in request.POST:
                 donor.mailing_address = donor.address
         donor.save()
+        donation.donor = donor
+        donation.save()
         return self.forms_are_valid()
 
     def forms_are_invalid(self, **kwargs):

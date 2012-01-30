@@ -22,6 +22,19 @@ class BaseDonationForm(forms.Form):
     anonymous = forms.BooleanField(required=False,
             label=text.get("donation.label.anonymous"))
 
+    def get_donation_kwargs(self):
+        if not self.is_valid():
+            # TODO: raise here?
+            return {}
+        return {
+            "amount": self.cleaned_data["amount"],
+        }
+
+    # TODO: support commit=True?
+    def save(self, **kwargs):
+        donation = models.Donation(**self.get_donation_kwargs())
+        return donation
+
     def process_payment(self):
         """
         Required by any form implementing a donation form
@@ -34,7 +47,6 @@ class CreditCardDonationForm(BaseDonationForm):
 
     .. todo:: Add widget that is smart for expiration dates
     """
-    names = forms.CharField()
     card_number = forms.CharField()
     ccv_code = forms.CharField()
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)

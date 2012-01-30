@@ -1,7 +1,10 @@
+from armstrong.dev.tests.utils.backports import override_settings
+import datetime
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client
 import os
+import random
 from unittest import expectedFailure
 
 from ._utils import TestCase
@@ -112,39 +115,58 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     @property
+    def random_card_number(self):
+        card_numbers = {
+            "amex": 370000000000002,
+            "discover": 6011000000000012,
+            "visa": 4222222222222222,
+            "mastercard": 5555555555554444,
+        }
+        return card_numbers.values()[random.randint(0, 3)]
+
+    def get_base_random_data(self, **kwargs):
+        now = datetime.datetime.now()
+        data = {
+            "name": self.random_donor_name,
+            "amount": self.random_amount,
+            "card_number": self.random_card_number,
+            "ccv_code": 123,
+            "expiration_month": "%02d" % now.month,
+            "expiration_year": "%04d" % (now + datetime.timedelta(365)).year,
+            "name": self.random_donor_name,
+        }
+        data.update(kwargs)
+        return data
+
+    @property
     def random_post_data(self):
-        donor_name = self.random_donor_name
+        data = self.get_base_random_data()
         address_kwargs = self.random_address_kwargs
         address_formset = self.get_data_as_formset(address_kwargs)
-        data = {
-            "name": donor_name,
-        }
         data.update(address_formset)
         return data
 
     def test_saves_donation_on_post_with_minimal_information(self):
         donor_name = self.random_donor_name
         random_amount = self.random_amount
-        data = {
-            "name": donor_name,
-            "amount": random_amount,
-        }
+        data = self.get_base_random_data(name=donor_name, amount=random_amount)
         data.update(self.get_data_as_formset())
 
         # sanity check
         self.assertRaises(models.Donor.DoesNotExist,
                 models.Donor.objects.get, name=donor_name)
-        self.client.post(self.url, data)
+        with override_settings(ARMSTRONG_DONATION_FORM="SimpleDonationForm"):
+            self.client.post(self.url, data)
         donor = models.Donor.objects.get(name=donor_name)
         self.assertEqual(donor.name, donor_name)
+        donation = models.Donation.objects.get(donor=donor)
+        self.assertEqual(donation.amount, random_amount)
 
     def test_saves_address_if_present(self):
         donor_name = self.random_donor_name
         address_kwargs = self.random_address_kwargs
         address_formset = self.get_data_as_formset(address_kwargs)
-        data = {
-            "name": donor_name,
-        }
+        data = self.get_base_random_data(name=donor_name)
         data.update(address_formset)
 
         self.client.post(self.url, data)
@@ -161,9 +183,7 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
             address_kwargs,
             mailing_address_kwargs,
         ])
-        data = {
-            "name": donor_name,
-        }
+        data = self.get_base_random_data(name=donor_name)
         data.update(address_formset)
 
         self.assertEqual(0, len(models.DonorAddress.objects.all()),
@@ -183,12 +203,12 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     def test_only_saves_donor_once(self):
         """This will pass if #17594 is merged in"""
         data = self.random_post_data
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             self.client.post(self.url, data)
 
     def test_only_saves_donor_once_with_buggy_modelformset(self):
         data = self.random_post_data
-        with self.assertNumQueries(3, msg="will fail if #17594 is merged"):
+        with self.assertNumQueries(3 + 1, msg="will fail if #17594 is merged"):
             self.client.post(self.url, data)
 
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):

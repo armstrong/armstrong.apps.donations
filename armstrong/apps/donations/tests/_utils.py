@@ -22,6 +22,7 @@ class TestCase(ArmstrongTestCase):
             "address": "%d Some St" % random.randint(1000, 2000),
             "city": "Anytown",
             "state": "TX",
+            "zipcode": "787%02d" % random.randint(1, 99),
         }
 
     @property

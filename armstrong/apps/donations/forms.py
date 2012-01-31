@@ -52,9 +52,6 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
-    def process_payment(self):
-        pass
-
 
 class DonorForm(forms.ModelForm):
     class Meta:

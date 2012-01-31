@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect
 from django.views.generic import TemplateView
 
 from . import forms
+from . import backends
 
 
 class LandingView(TemplateView):
@@ -16,7 +17,6 @@ class ThanksView(TemplateView):
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
     donor_form_initial = {}
-    donation_form_class = forms.CreditCardDonationForm
 
     @property
     def is_write_request(self):
@@ -65,9 +65,7 @@ class DonationFormView(TemplateView):
         return forms.DonorForm(**self.get_form_kwargs("donor"))
 
     def get_donation_form_class(self):
-        # TODO: make this configurable based on backend
-
-        return self.donation_form_class
+        return backends.get_backend().get_form_class()
 
     def get_donation_form(self):
         donation_form_class = self.get_donation_form_class()

@@ -1,8 +1,10 @@
 from django.core.exceptions import ValidationError
+import fudge
 import random
 from ._utils import generate_random_user
 from ._utils import TestCase
 
+from .. import backends
 from ..models import (Donor, Donation, DonationType)
 
 
@@ -41,6 +43,25 @@ class DonationTypeTestCase(TestCase):
         r = random.randint(1, 100)
         a = DonationType.objects.create(name="Basic", monthly=r)
         self.assertEqual(r, a.amount)
+
+
+class DonationTestCase(TestCase):
+    @property
+    def random_kwargs(self):
+        return dict([("key-%d" % a, random.randint(1, 10)) for a in
+                range(random.randint(1, 10))])
+
+    def test_dispatches_to_configured_backend(self):
+        m = Donation()
+        random_kwargs = self.random_kwargs
+        fake_backend = fudge.Fake()
+        fake_backend.expects("purchase").with_args(m, **random_kwargs)
+        fake_get_backend = fudge.Fake()
+        fake_get_backend.is_callable().returns(fake_backend)
+        with fudge.patched_context(backends, "get_backend", fake_get_backend):
+            m.finish(**random_kwargs)
+
+        fudge.verify()
 
 
 class DonationWorkFlowTestCase(TestCase):

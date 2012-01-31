@@ -46,20 +46,15 @@ class DonationTypeTestCase(TestCase):
 
 
 class DonationTestCase(TestCase):
-    @property
-    def random_kwargs(self):
-        return dict([("key-%d" % a, random.randint(1, 10)) for a in
-                range(random.randint(1, 10))])
-
     def test_dispatches_to_configured_backend(self):
         m = Donation()
-        random_kwargs = self.random_kwargs
+        random_card = "some-random-card-%d" % random.randint(1000, 2000)
         fake_backend = fudge.Fake()
-        fake_backend.expects("purchase").with_args(m, **random_kwargs)
+        fake_backend.expects("purchase").with_args(m, random_card)
         fake_get_backend = fudge.Fake()
         fake_get_backend.is_callable().returns(fake_backend)
         with fudge.patched_context(backends, "get_backend", fake_get_backend):
-            m.finish(**random_kwargs)
+            m.purchase(random_card)
 
         fudge.verify()
 

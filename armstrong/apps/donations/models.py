@@ -91,6 +91,6 @@ class Donation(models.Model):
             self.amount = self.code.calculate(self.amount)
         return super(Donation, self).save(**kwargs)
 
-    def finish(self, **kwargs):
+    def purchase(self, card):
         from . import backends
-        backends.get_backend().purchase(self, **kwargs)
+        return backends.get_backend().purchase(self, card)

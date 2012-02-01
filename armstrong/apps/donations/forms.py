@@ -1,3 +1,4 @@
+import billing
 from django import forms
 from django.conf import settings
 from django.contrib.localflavor.us import forms as us
@@ -35,15 +36,16 @@ class BaseDonationForm(forms.Form):
         donation = models.Donation(**self.get_donation_kwargs())
         return donation
 
-    def process_payment(self):
-        """
-        Required by any form implementing a donation form
-        """
-        raise NotImplementedError()
-
 
 class CreditCardDonationForm(BaseDonationForm):
     """
+    Form representing the credit card donation process for Authorize.net
+
+    It's possible that this can work with other backends, but it has not
+    been tested.
+
+    Each specific Donation form should create what is necessary for their
+    backend's implemenation of `purchase`.
 
     .. todo:: Add widget that is smart for expiration dates
     """
@@ -51,6 +53,20 @@ class CreditCardDonationForm(BaseDonationForm):
     ccv_code = forms.CharField()
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
+
+    def get_credit_card(self, donor):
+        self.is_valid()  # TODO: do something when bad data is here
+
+        name = donor.name
+        first_name, last_name = name.split(" ", 1)
+        return billing.CreditCard(
+            first_name=first_name,
+            last_name=last_name,
+            number=self.cleaned_data["card_number"],
+            month=self.cleaned_data["expiration_month"],
+            year=self.cleaned_data["expiration_year"],
+            verification_value=self.cleaned_data["ccv_code"],
+        )
 
 
 class DonorForm(forms.ModelForm):

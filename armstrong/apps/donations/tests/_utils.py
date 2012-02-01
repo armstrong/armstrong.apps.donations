@@ -1,9 +1,10 @@
 from armstrong.dev.tests.utils.base import ArmstrongTestCase
 from armstrong.dev.tests.utils.users import generate_random_user
+import datetime
 from django.test.client import RequestFactory
 import random
 
-from ..models import (DonorAddress, Donor, DonationType, PromoCode)
+from ..models import (Donation, DonorAddress, Donor, DonationType, PromoCode)
 
 
 class TestCase(ArmstrongTestCase):
@@ -38,6 +39,13 @@ class TestCase(ArmstrongTestCase):
         )
 
     @property
+    def random_donation(self):
+        return Donation.objects.create(
+            amount=self.random_amount,
+            donor=self.random_donor,
+        )
+
+    @property
     def random_type(self):
         return DonationType.objects.create(
             name="Basic $20/year",
@@ -55,6 +63,31 @@ class TestCase(ArmstrongTestCase):
     @property
     def random_amount(self):
         return random.randint(1, 100)
+
+    @property
+    def random_card_number(self):
+        card_numbers = {
+            "amex": "370000000000002",
+            "discover": "6011000000000012",
+            "visa": "4222222222222222",
+            "mastercard": "5555555555554444",
+        }
+        return card_numbers.values()[random.randint(0, 3)]
+
+    def get_base_random_data(self, **kwargs):
+        now = datetime.datetime.now()
+        data = {
+            "name": self.random_donor_name,
+            "amount": self.random_amount,
+            "card_number": self.random_card_number,
+            "ccv_code": "123",
+            "expiration_month": "%02d" % now.month,
+            "expiration_year": "%04d" % (now + datetime.timedelta(365)).year,
+            "name": self.random_donor_name,
+            "mailing_same_as_billing": u"1",
+        }
+        data.update(kwargs)
+        return data
 
     def get_data_as_formset(self, data=None, prefix="form", total_forms=None,
             initial_forms=u"0", max_num_forms=u""):

@@ -115,31 +115,6 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     @property
-    def random_card_number(self):
-        card_numbers = {
-            "amex": 370000000000002,
-            "discover": 6011000000000012,
-            "visa": 4222222222222222,
-            "mastercard": 5555555555554444,
-        }
-        return card_numbers.values()[random.randint(0, 3)]
-
-    def get_base_random_data(self, **kwargs):
-        now = datetime.datetime.now()
-        data = {
-            "name": self.random_donor_name,
-            "amount": self.random_amount,
-            "card_number": self.random_card_number,
-            "ccv_code": 123,
-            "expiration_month": "%02d" % now.month,
-            "expiration_year": "%04d" % (now + datetime.timedelta(365)).year,
-            "name": self.random_donor_name,
-            "mailing_same_as_billing": u"1",
-        }
-        data.update(kwargs)
-        return data
-
-    @property
     def random_post_data(self):
         data = self.get_base_random_data()
         address_kwargs = self.random_address_kwargs

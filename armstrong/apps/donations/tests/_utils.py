@@ -6,6 +6,7 @@ import fudge
 from fudge.inspector import arg
 import random
 
+from .. import forms
 from ..models import (Donation, DonorAddress, Donor, DonationType, PromoCode)
 
 
@@ -14,6 +15,13 @@ class TestCase(ArmstrongTestCase):
         super(TestCase, self).setUp()
         # TODO: move this to armstrong.dev
         self.factory = RequestFactory()
+
+    def tearDown(self):
+        self.restore_patched_objects()
+
+    def restore_patched_objects(self):
+        if hasattr(self, "patches"):
+            [p.restore() for p in self.patches]
 
     @property
     def random_donor_name(self):
@@ -122,4 +130,13 @@ class TestCase(ArmstrongTestCase):
             payment_stub = self.get_payment_stub(successful=successful)
         fake = fudge.Fake()
         fake.is_callable().returns(payment_stub)
+        return fake
+
+    def get_backend_stub(self, successful=True):
+        backend = fudge.Fake()
+        backend.provides("get_form_class").returns(
+                forms.CreditCardDonationForm)
+        backend.provides("purchase").returns(successful)
+        fake = fudge.Fake()
+        fake.provides("get_backend").returns(backend)
         return fake

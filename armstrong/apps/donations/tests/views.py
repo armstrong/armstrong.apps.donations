@@ -34,6 +34,13 @@ class BaseDonationFormViewTestCase(TestCase):
             os.path.join(os.path.dirname(__file__), "_templates"),
         )
         self.client
+        self.patches = [
+            fudge.patch_object(views, "backends", self.get_backend_stub())
+        ]
+        fudge.clear_calls()
+
+    def tearDown(self):
+        super(BaseDonationFormViewTestCase, self).tearDown()
 
     def assert_in_context(self, response, name):
         # TODO: move this into armstrong.dev
@@ -178,14 +185,20 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
 
     @expectedFailure
     def test_only_saves_donor_once(self):
-        """This will pass if #17594 is merged in"""
+        """
+        Verify the number of queries that are run.
+
+        This assumes that the tests are run in isolation from the backend.
+
+        This will pass if #17594 is merged in.
+        """
         data = self.random_post_data
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(3):
             self.client.post(self.url, data)
 
     def test_only_saves_donor_once_with_buggy_modelformset(self):
         data = self.random_post_data
-        with self.assertNumQueries(4 + 1, msg="will fail if #17594 is merged"):
+        with self.assertNumQueries(3 + 1, msg="will fail if #17594 is merged"):
             self.client.post(self.url, data)
 
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):

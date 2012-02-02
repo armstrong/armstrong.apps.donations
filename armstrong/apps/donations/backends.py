@@ -10,10 +10,11 @@ class AuthorizeNetBackend(object):
 
     def purchase(self, donation, form):
         authorize = get_gateway("authorize_net")
-        authorize.purchase(donation.amount,
+        response = authorize.purchase(donation.amount,
                 form.get_credit_card(donation.donor),
                 options=self.get_options(donation))
-        donation.processed = True
+        if response["status"] == "SUCCESS":
+            donation.processed = True
 
     def get_options(self, donation):
         donor = donation.donor

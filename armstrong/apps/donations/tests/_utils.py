@@ -2,6 +2,8 @@ from armstrong.dev.tests.utils.base import ArmstrongTestCase
 from armstrong.dev.tests.utils.users import generate_random_user
 import datetime
 from django.test.client import RequestFactory
+import fudge
+from fudge.inspector import arg
 import random
 
 from ..models import (Donation, DonorAddress, Donor, DonationType, PromoCode)
@@ -107,3 +109,17 @@ class TestCase(ArmstrongTestCase):
             for k, v in a.items():
                 r["%s-%d-%s" % (prefix, idx, k)] = v
         return r
+
+    def get_payment_stub(self, successful=True):
+        fake = fudge.Fake()
+        fake.provides("purchase") \
+            .with_args(arg.any(), arg.any(), options=arg.any()) \
+            .returns({"status": "SUCCESS" if successful else "FAILURE"})
+        return fake
+
+    def get_gateway_stub(self, payment_stub=None, successful=True):
+        if not payment_stub:
+            payment_stub = self.get_payment_stub(successful=successful)
+        fake = fudge.Fake()
+        fake.is_callable().returns(payment_stub)
+        return fake

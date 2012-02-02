@@ -63,20 +63,6 @@ class AuthorizeNetBackendTestCase(TestCase):
             backend.purchase(donation, donation_form)
         fudge.verify()
 
-    def get_payment_stub(self, successful=True):
-        fake = fudge.Fake()
-        fake.expects("purchase") \
-            .with_args(arg.any(), arg.any(), options=arg.any()) \
-            .returns({"status": "SUCCESS" if successful else "FAILURE"})
-        return fake
-
-    def get_gateway_stub(self, payment_stub=None, successful=True):
-        if not payment_stub:
-            payment_stub = self.get_payment_stub(successful=successful)
-        fake = fudge.Fake()
-        fake.is_callable().returns(payment_stub)
-        return fake
-
     def test_mark_donation_as_processed(self):
         donation, donation_form = self.random_donation_and_form
         self.assertFalse(donation.processed, msg="sanity check")

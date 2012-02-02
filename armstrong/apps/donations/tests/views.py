@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client
+import fudge
 import os
 import random
 from unittest import expectedFailure
@@ -179,12 +180,12 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     def test_only_saves_donor_once(self):
         """This will pass if #17594 is merged in"""
         data = self.random_post_data
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             self.client.post(self.url, data)
 
     def test_only_saves_donor_once_with_buggy_modelformset(self):
         data = self.random_post_data
-        with self.assertNumQueries(3 + 1, msg="will fail if #17594 is merged"):
+        with self.assertNumQueries(4 + 1, msg="will fail if #17594 is merged"):
             self.client.post(self.url, data)
 
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):

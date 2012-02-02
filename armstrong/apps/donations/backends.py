@@ -13,6 +13,7 @@ class AuthorizeNetBackend(object):
         authorize.purchase(donation.amount,
                 form.get_credit_card(donation.donor),
                 options=self.get_options(donation))
+        donation.processed = True
 
     def get_options(self, donation):
         donor = donation.donor

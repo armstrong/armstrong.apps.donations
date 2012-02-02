@@ -9,6 +9,14 @@ from .. import forms
 
 
 class AuthorizeNetBackendTestCase(TestCase):
+    @property
+    def random_donation_and_form(self):
+        donation = self.random_donation
+        data = self.get_base_random_data(name=donation.donor.name,
+                amount=donation.amount)
+        donation_form = forms.CreditCardDonationForm(data)
+        return donation, donation_form
+
     def test_get_form_returns_credit_card_form(self):
         backend = backends.get_backend()
         self.assertEqual(backend.get_form_class(),
@@ -54,3 +62,27 @@ class AuthorizeNetBackendTestCase(TestCase):
             backend = backends.AuthorizeNetBackend()
             backend.purchase(donation, donation_form)
         fudge.verify()
+
+    def get_payment_stub(self):
+        fake = fudge.Fake()
+        fake.expects("purchase") \
+            .with_args(arg.any(), arg.any(), options=arg.any()) \
+            .returns({"status": "SUCCESS"})
+        return fake
+
+    def get_gateway_stub(self, payment_stub=None):
+        if not payment_stub:
+            payment_stub = self.get_payment_stub()
+        fake = fudge.Fake()
+        fake.is_callable().returns(payment_stub)
+        return fake
+
+    def test_mark_donation_as_processed(self):
+        donation, donation_form = self.random_donation_and_form
+        self.assertFalse(donation.processed, msg="sanity check")
+        gateway_stub = self.get_gateway_stub()
+        with fudge.patched_context(backends, "get_gateway", gateway_stub):
+            backend = backends.AuthorizeNetBackend()
+            backend.purchase(donation, donation_form)
+
+        self.assertTrue(donation.processed)

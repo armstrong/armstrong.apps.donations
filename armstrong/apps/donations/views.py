@@ -116,10 +116,12 @@ class DonationFormView(TemplateView):
         donor.save()
         donation.donor = donor
         donation.save()
-        return self.forms_are_valid()
+        return self.forms_are_valid(donation=donation,
+                donation_form=donation_form)
 
     def forms_are_invalid(self, **kwargs):
         return self.render_to_response(self.get_context_data())
 
-    def forms_are_valid(self, **kwargs):
+    def forms_are_valid(self, donation, donation_form, **kwargs):
+        backends.get_backend().purchase(donation, donation_form)
         return HttpResponseRedirect(self.success_url)

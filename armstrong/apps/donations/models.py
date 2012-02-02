@@ -83,6 +83,7 @@ class Donation(models.Model):
     code = models.ForeignKey(PromoCode, null=True, blank=True)
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
+    processed = models.BooleanField(default=False)
 
     def save(self, **kwargs):
         if self.donation_type and not self.amount:

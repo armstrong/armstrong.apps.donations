@@ -95,3 +95,20 @@ class AuthorizeNetBackendTestCase(TestCase):
             backend.purchase(donation, donation_form)
 
         self.assertFalse(donation.processed)
+
+    def test_purchase_returns_true_if_successful(self):
+        donation, donation_form = self.random_donation_and_form
+        gateway_stub = self.get_gateway_stub()
+        with fudge.patched_context(backends, "get_gateway", gateway_stub):
+            backend = backends.AuthorizeNetBackend()
+            response = backend.purchase(donation, donation_form)
+        self.assertTrue(response)
+
+    def test_purchase_returns_false_if_successful(self):
+        donation, donation_form = self.random_donation_and_form
+        gateway_stub = self.get_gateway_stub(successful=False)
+        with fudge.patched_context(backends, "get_gateway", gateway_stub):
+            backend = backends.AuthorizeNetBackend()
+            response = backend.purchase(donation, donation_form)
+
+        self.assertFalse(response)

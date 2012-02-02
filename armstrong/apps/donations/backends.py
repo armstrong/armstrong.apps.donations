@@ -15,6 +15,7 @@ class AuthorizeNetBackend(object):
                 options=self.get_options(donation))
         if response["status"] == "SUCCESS":
             donation.processed = True
+        return donation.processed
 
     def get_options(self, donation):
         donor = donation.donor

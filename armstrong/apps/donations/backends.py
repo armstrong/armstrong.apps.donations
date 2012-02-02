@@ -16,8 +16,9 @@ class AuthorizeNetBackend(object):
 
     def get_options(self, donation):
         donor = donation.donor
-        return {
-            "billing_address": {
+        r = {}
+        if donor.address:
+            r["billing_address"] = {
                 "name": donor.name,
                 "address1": donor.address.address,
                 "city": donor.address.city,
@@ -25,8 +26,9 @@ class AuthorizeNetBackend(object):
                 # TODO: Support other countries
                 "country": "US",
                 "zip": donor.address.zipcode,
-            },
-            "shipping_address": {
+            }
+        if donor.mailing_address:
+            r["shipping_address"] = {
                 "name": donor.name,
                 "address1": donor.mailing_address.address,
                 "city": donor.mailing_address.city,
@@ -35,7 +37,8 @@ class AuthorizeNetBackend(object):
                 "country": "US",
                 "zip": donor.mailing_address.zipcode,
             }
-        }
+        return r
+
 
 raw_backend = GenericBackend("ARMSTRONG_DONATIONS_BACKEND", defaults=[
     "armstrong.apps.donations.backends.AuthorizeNetBackend",

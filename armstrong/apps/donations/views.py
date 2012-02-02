@@ -123,5 +123,13 @@ class DonationFormView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
     def forms_are_valid(self, donation, donation_form, **kwargs):
-        backends.get_backend().purchase(donation, donation_form)
+        if not backends.get_backend().purchase(donation, donation_form):
+            return self.purchase_failed()
         return HttpResponseRedirect(self.success_url)
+
+    def purchase_failed(self):
+        context = {
+            "error_msg": None,
+        }
+        context.update(self.get_context_data())
+        return self.render_to_response(context)

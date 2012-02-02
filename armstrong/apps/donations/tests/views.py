@@ -8,6 +8,7 @@ import os
 import random
 from unittest import expectedFailure
 
+from ._utils import no_initial_patched_objects
 from ._utils import TestCase
 
 from .. import forms
@@ -247,6 +248,15 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assert_template("armstrong/donations/donation.html", response)
         self.assert_form_has_errors(response, "address_formset")
 
-    @expectedFailure
+    @no_initial_patched_objects
     def test_displays_errors_when_payment_method_authorization_fails(self):
-        self.fail()
+        backend = self.get_backend_stub(successful=False)
+        self.patches = [
+            fudge.patch_object(views, "backends", backend),
+        ]
+        fudge.clear_calls()
+
+        data = self.random_post_data
+        response = self.client.post(self.url, data)
+        self.assert_template("armstrong/donations/donation.html", response)
+        self.assert_in_context(response, "error_msg")

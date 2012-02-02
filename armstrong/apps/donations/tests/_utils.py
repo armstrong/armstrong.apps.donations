@@ -10,6 +10,14 @@ from .. import forms
 from ..models import (Donation, DonorAddress, Donor, DonationType, PromoCode)
 
 
+def no_initial_patched_objects(func):
+    def inner(self, *args, **kwargs):
+        self.restore_patched_objects()
+        self.patched = []
+        return func(self, *args, **kwargs)
+    return inner
+
+
 class TestCase(ArmstrongTestCase):
     def setUp(self):
         super(TestCase, self).setUp()

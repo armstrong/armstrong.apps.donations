@@ -126,25 +126,41 @@ class TestCase(ArmstrongTestCase):
                 r["%s-%d-%s" % (prefix, idx, k)] = v
         return r
 
-    def get_payment_stub(self, successful=True):
+    def get_payment_stub(self, successful=True, response_reason_text="Foobar"):
+        fake_response = self.get_fake_purchase_response(successful,
+                response_reason_text)
         fake = fudge.Fake()
         fake.provides("purchase") \
-            .with_args(arg.any(), arg.any(), options=arg.any()) \
-            .returns({"status": "SUCCESS" if successful else "FAILURE"})
+            .returns(fake_response)
         return fake
 
-    def get_gateway_stub(self, payment_stub=None, successful=True):
+    def get_fake_purchase_response(self, successful=True,
+            response_reason_text="Foobar"):
+        fake = fudge.Fake()
+        fake.has_attr(response_reason_text=response_reason_text)
+        return {
+            "status": "SUCCESS" if successful else "FAILURE",
+            "response": fake,
+        }
+
+    def get_gateway_stub(self, payment_stub=None, successful=True,
+            response_reason_text="Foobar"):
         if not payment_stub:
-            payment_stub = self.get_payment_stub(successful=successful)
+            payment_stub = self.get_payment_stub(successful=successful,
+                    response_reason_text=response_reason_text)
         fake = fudge.Fake()
         fake.is_callable().returns(payment_stub)
         return fake
 
-    def get_backend_stub(self, successful=True):
+    def get_backend_stub(self, successful=True, reason="Foobar"):
         backend = fudge.Fake()
         backend.provides("get_form_class").returns(
                 forms.CreditCardDonationForm)
-        backend.provides("purchase").returns(successful)
+        backend.provides("purchase").returns({
+            "status": successful,
+            "reason": reason,
+            "response": "Foobar",
+        })
         fake = fudge.Fake()
         fake.provides("get_backend").returns(backend)
         return fake

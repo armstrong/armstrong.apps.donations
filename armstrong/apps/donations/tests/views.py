@@ -16,6 +16,23 @@ from .. import models
 from .. import views
 
 
+def failed_purchase(func):
+    def inner(self):
+        random_text = "Some Random Text (%d)" % random.randint(1000, 2000)
+        backend = self.get_backend_stub(successful=False, reason=random_text)
+        self.patches = [
+            fudge.patch_object(views, "backends", backend),
+        ]
+        fudge.clear_calls()
+
+        data = self.random_post_data
+        response = self.client.post(self.url, data)
+        backend_response = backend.get_backend().purchase()["response"]
+        func(self, response, random_text=random_text,
+                backend_response=backend_response)
+    return inner
+
+
 class BaseDonationFormViewTestCase(TestCase):
     view_class = views.DonationFormView
     view_name = "donations_form"
@@ -248,15 +265,22 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assert_template("armstrong/donations/donation.html", response)
         self.assert_form_has_errors(response, "address_formset")
 
-    @no_initial_patched_objects
-    def test_displays_errors_when_payment_method_authorization_fails(self):
-        backend = self.get_backend_stub(successful=False)
-        self.patches = [
-            fudge.patch_object(views, "backends", backend),
-        ]
-        fudge.clear_calls()
-
-        data = self.random_post_data
-        response = self.client.post(self.url, data)
+    @failed_purchase
+    def test_does_redisplays_form_on_failed_donation(self, response, **kwargs):
+        self.assertEqual(200, response.status_code)
         self.assert_template("armstrong/donations/donation.html", response)
-        self.assert_in_context(response, "error_msg")
+
+    @failed_purchase
+    def test_error_msg_in_context_on_failed_purchase(self, response, **kwargs):
+        self.assert_value_in_context(response, "error_msg",
+                "Unable to process payment")
+
+    @failed_purchase
+    def test_reason_in_context_on_failed_purchase(self, response, random_text,
+            **kwargs):
+        self.assert_value_in_context(response, "reason", random_text)
+
+    @failed_purchase
+    def test_response_in_context_on_failed_purchase(self, response,
+            backend_response, **kwargs):
+        self.assert_value_in_context(response, "response", backend_response)

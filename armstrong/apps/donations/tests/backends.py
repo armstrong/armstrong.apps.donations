@@ -1,6 +1,7 @@
 import billing
 import fudge
 from fudge.inspector import arg
+import random
 
 from ._utils import TestCase
 
@@ -53,7 +54,7 @@ class AuthorizeNetBackendTestCase(TestCase):
                         "country": "US",
                         "zip": donor.mailing_address.zipcode,
                     }
-                }).returns({"status": "SUCCESS"})
+                }).returns(self.get_fake_purchase_response())
 
         get_gateway = fudge.Fake()
         get_gateway.is_callable().returns(fake)
@@ -82,19 +83,38 @@ class AuthorizeNetBackendTestCase(TestCase):
 
         self.assertFalse(donation.processed)
 
-    def test_purchase_returns_true_if_successful(self):
+    def test_purchase_returns_true_status_if_successful(self):
         donation, donation_form = self.random_donation_and_form
         gateway_stub = self.get_gateway_stub()
         with fudge.patched_context(backends, "get_gateway", gateway_stub):
             backend = backends.AuthorizeNetBackend()
             response = backend.purchase(donation, donation_form)
-        self.assertTrue(response)
+        self.assertTrue(response["status"])
 
-    def test_purchase_returns_false_if_successful(self):
+    def test_purchase_returns_false_status_if_successful(self):
         donation, donation_form = self.random_donation_and_form
         gateway_stub = self.get_gateway_stub(successful=False)
         with fudge.patched_context(backends, "get_gateway", gateway_stub):
             backend = backends.AuthorizeNetBackend()
             response = backend.purchase(donation, donation_form)
+        self.assertFalse(response["status"])
 
-        self.assertFalse(response)
+    def test_returned_dict_contains_response_reason_text_as_reason(self):
+        random_text = "Some Random Text (%d)" % random.randint(1000, 2000)
+        donation, donation_form = self.random_donation_and_form
+        gateway_stub = self.get_gateway_stub(response_reason_text=random_text)
+        with fudge.patched_context(backends, "get_gateway", gateway_stub):
+            backend = backends.AuthorizeNetBackend()
+            response = backend.purchase(donation, donation_form)
+        self.assertTrue("reason" in response, msg="sanity check")
+        self.assertEqual(response["reason"], random_text)
+
+    def test_returned_dict_contains_raw_response_model(self):
+        donation, donation_form = self.random_donation_and_form
+        gateway_stub = self.get_gateway_stub()
+        with fudge.patched_context(backends, "get_gateway", gateway_stub):
+            backend_response = backends.get_gateway().purchase()["response"]
+            backend = backends.AuthorizeNetBackend()
+            response = backend.purchase(donation, donation_form)
+        self.assertTrue("response" in response, msg="sanity check")
+        self.assertEqual(response["response"], backend_response)

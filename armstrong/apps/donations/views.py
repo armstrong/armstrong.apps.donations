@@ -101,18 +101,7 @@ class DonationFormView(TemplateView):
         address_formset = forms.DonorAddressFormset(data=request.POST)
         if not address_formset.is_valid():
             return self.forms_are_invalid()
-
-        # TODO: determine how to proceed with a mailing_same_as_billing and
-        #       DonorAddressFormset mismatch.  Possibly move logic into the
-        #       Formset so it can handle it appropriately instead of doing it
-        #       here in the view.
-        addresses = address_formset.save()
-        if len(addresses):
-            donor.address = addresses[0]
-            if len(addresses) is 2:
-                donor.mailing_address = addresses[1]
-            elif "mailing_same_as_billing" in request.POST:
-                donor.mailing_address = donor.address
+        address_formset.save(donor)
         donor.save()
         donation.donor = donor
         donation.save()

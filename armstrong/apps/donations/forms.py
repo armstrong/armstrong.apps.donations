@@ -74,4 +74,23 @@ class DonorForm(forms.ModelForm):
         model = models.Donor
         excludes = ("address", "mailing_address", )
 
-DonorAddressFormset = modelformset_factory(models.DonorAddress)
+
+BaseDonorAddressFormset = modelformset_factory(models.DonorAddress)
+
+
+class DonorAddressFormset(BaseDonorAddressFormset):
+    def __init__(self, data=None, **kwargs):
+        self.mailing_same_as_billing = False
+        if data and "mailing_same_as_billing" in data:
+            self.mailing_same_as_billing = True
+        super(DonorAddressFormset, self).__init__(data=data, **kwargs)
+
+    def save(self, donor, **kwargs):
+        instances = super(DonorAddressFormset, self).save(**kwargs)
+        if len(instances):
+            donor.address = instances[0]
+            if len(instances) is 2:
+                donor.mailing_address = instances[1]
+            elif self.mailing_same_as_billing:
+                donor.mailing_address = donor.address
+        return instances

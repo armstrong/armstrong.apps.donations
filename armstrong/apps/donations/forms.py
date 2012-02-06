@@ -1,7 +1,6 @@
 import billing
 from django import forms
 from django.conf import settings
-from django.contrib.localflavor.us import forms as us
 from django.forms.models import modelformset_factory
 
 from .constants import MONTH_CHOICES

@@ -1,14 +1,13 @@
 from armstrong.dev.tests.utils.backports import override_settings
-import datetime
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client
+from functools import wraps
 import fudge
 import os
 import random
 from unittest import expectedFailure
 
-from ._utils import no_initial_patched_objects
 from ._utils import TestCase
 
 from .. import forms
@@ -106,7 +105,6 @@ class BaseDonationFormViewTestCase(TestCase):
 
 # TODO: move to armstrong.dev
 def get_response(func):
-    from functools import wraps
     @wraps(func)
     def inner(self):
         func(self, self.get_response())

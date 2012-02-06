@@ -16,7 +16,6 @@ class ThanksView(TemplateView):
 
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
-    donor_form_initial = {}
 
     @property
     def is_write_request(self):
@@ -61,9 +60,6 @@ class DonationFormView(TemplateView):
         kwargs = {"initial": []}
         return self.add_data_if_write_request(kwargs)
 
-    def get_donor_form(self):
-        return forms.DonorForm(**self.get_form_kwargs("donor"))
-
     def get_donation_form_class(self):
         return backends.get_backend().get_form_class()
 
@@ -75,10 +71,11 @@ class DonationFormView(TemplateView):
         return forms.DonorAddressFormset(**self.get_formset_kwargs("address"))
 
     def get_context_data(self, **kwargs):
+        donation_form = self.get_donation_form()
         context = {
             "form_action_url": self.form_action_url,
-            "donor_form": self.get_donor_form(),
-            "donation_form": self.get_donation_form(),
+            "donor_form": donation_form.donor_form,
+            "donation_form": donation_form,
             "address_formset": self.get_address_formset(),
         }
         context.update(kwargs)
@@ -89,14 +86,10 @@ class DonationFormView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         # TODO: clean up so Travis doesn't cry
-        donor_form = self.get_donor_form()
-        if not donor_form.is_valid():
-            return self.forms_are_invalid()
-        donor = donor_form.save(commit=False)
         donation_form = self.get_donation_form()
         if not donation_form.is_valid():
             return self.forms_are_invalid()
-        donation = donation_form.save(commit=False)
+        donation, donor = donation_form.save(commit=False)
         address_formset = self.get_address_formset()
         if not address_formset.is_valid():
             return self.forms_are_invalid()

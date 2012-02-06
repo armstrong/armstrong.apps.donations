@@ -24,6 +24,13 @@ class BaseDonationForm(forms.Form):
     anonymous = forms.BooleanField(required=False,
             label=text.get("donation.label.anonymous"))
 
+    def __init__(self, *args, **kwargs):
+        self.donor_form = self.get_donor_form(*args, **kwargs)
+        super(BaseDonationForm, self).__init__(*args, **kwargs)
+
+    def get_donor_form(self, *args, **kwargs):
+        return DonorForm(*args, **kwargs)
+
     def get_donation_kwargs(self):
         if not self.is_valid():
             # TODO: raise here?
@@ -32,10 +39,17 @@ class BaseDonationForm(forms.Form):
             "amount": self.cleaned_data["amount"],
         }
 
+    def is_valid(self):
+        return all([
+            super(BaseDonationForm, self).is_valid(),
+            self.donor_form.is_valid(),
+        ])
+
     # TODO: support commit=True?
     def save(self, **kwargs):
         donation = models.Donation(**self.get_donation_kwargs())
-        return donation
+        donor = self.donor_form.save(commit=False)
+        return donation, donor
 
 
 class CreditCardDonationForm(BaseDonationForm):

@@ -57,6 +57,9 @@ class BaseDonationForm(forms.Form):
     # TODO: support commit=True?
     def save(self, **kwargs):
         donation = models.Donation(**self.get_donation_kwargs())
+        if "promo_code" in self.data:
+            donation.code = models.PromoCode.objects.get(
+                    code=self.data["promo_code"])
         donor = self.donor_form.save(commit=False)
         self.address_formset.save(donor)
         donor.save()

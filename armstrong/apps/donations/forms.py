@@ -25,11 +25,31 @@ class BaseDonationForm(forms.Form):
             label=text.get("donation.label.anonymous"))
 
     def __init__(self, *args, **kwargs):
+        # TODO: provide custom prefixes to each sub-form
         self.donor_form = self.get_donor_form(*args, **kwargs)
+        self.address_formset = self.get_address_formset(*args, **kwargs)
         super(BaseDonationForm, self).__init__(*args, **kwargs)
 
     def get_donor_form(self, *args, **kwargs):
         return DonorForm(*args, **kwargs)
+
+    def _formset_is_populated_form(self, *args, **kwargs):
+        # TODO: there has to be a better way to do this...?
+        if "data" in kwargs:
+            data = kwargs["data"]
+        elif len(args):
+            data = args[0]
+        else:
+            data = {}
+        for key in data.keys():
+            if key.startswith("form-"):
+                return True
+        return False
+
+    def get_address_formset(self, *args, **kwargs):
+        if self._formset_is_populated_form(*args, **kwargs):
+            return DonorAddressFormset(*args, **kwargs)
+        return DonorAddressFormset()
 
     def get_donation_kwargs(self):
         if not self.is_valid():
@@ -43,13 +63,18 @@ class BaseDonationForm(forms.Form):
         return all([
             super(BaseDonationForm, self).is_valid(),
             self.donor_form.is_valid(),
+            self.address_formset.is_valid(),
         ])
 
     # TODO: support commit=True?
     def save(self, **kwargs):
         donation = models.Donation(**self.get_donation_kwargs())
         donor = self.donor_form.save(commit=False)
-        return donation, donor
+        self.address_formset.save(donor)
+        donor.save()
+        donation.donor = donor
+        donation.save()
+        return donation
 
 
 class CreditCardDonationForm(BaseDonationForm):

@@ -51,13 +51,8 @@ class DonationFormView(TemplateView):
             })
         return kwargs
 
-    def get_form_kwargs(self, key):
-        kwargs = {"initial": getattr(self, "%s_form_initial" % key, None)}
-        return self.add_data_if_write_request(kwargs)
-
-    def get_formset_kwargs(self, key):
-        # TODO: make initial work
-        kwargs = {"initial": []}
+    def get_donation_form_kwargs(self):
+        kwargs = {"initial": getattr(self, "donation_form_initial", None)}
         return self.add_data_if_write_request(kwargs)
 
     def get_donation_form_class(self):
@@ -65,10 +60,7 @@ class DonationFormView(TemplateView):
 
     def get_donation_form(self):
         donation_form_class = self.get_donation_form_class()
-        return donation_form_class(**self.get_form_kwargs("donation"))
-
-    def get_address_formset(self):
-        return forms.DonorAddressFormset(**self.get_formset_kwargs("address"))
+        return donation_form_class(**self.get_donation_form_kwargs())
 
     def get_context_data(self, **kwargs):
         donation_form = self.get_donation_form()
@@ -76,7 +68,7 @@ class DonationFormView(TemplateView):
             "form_action_url": self.form_action_url,
             "donor_form": donation_form.donor_form,
             "donation_form": donation_form,
-            "address_formset": self.get_address_formset(),
+            "address_formset": donation_form.address_formset,
         }
         context.update(kwargs)
         return context
@@ -85,18 +77,10 @@ class DonationFormView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
     def post(self, request, *args, **kwargs):
-        # TODO: clean up so Travis doesn't cry
         donation_form = self.get_donation_form()
         if not donation_form.is_valid():
             return self.forms_are_invalid()
-        donation, donor = donation_form.save(commit=False)
-        address_formset = self.get_address_formset()
-        if not address_formset.is_valid():
-            return self.forms_are_invalid()
-        address_formset.save(donor)
-        donor.save()
-        donation.donor = donor
-        donation.save()
+        donation = donation_form.save()
         return self.forms_are_valid(donation=donation,
                 donation_form=donation_form)
 

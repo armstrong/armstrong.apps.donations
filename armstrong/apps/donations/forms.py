@@ -6,6 +6,7 @@ from django.forms.models import modelformset_factory
 
 from .constants import MONTH_CHOICES
 from .constants import YEAR_CHOICES
+from .constants import MAILING_SAME_AS_BILLING
 
 from . import models
 from . import text
@@ -81,7 +82,7 @@ BaseDonorAddressFormset = modelformset_factory(models.DonorAddress)
 class DonorAddressFormset(BaseDonorAddressFormset):
     def __init__(self, data=None, **kwargs):
         self.mailing_same_as_billing = False
-        if data and "mailing_same_as_billing" in data:
+        if data and MAILING_SAME_AS_BILLING in data:
             self.mailing_same_as_billing = True
         super(DonorAddressFormset, self).__init__(data=data, **kwargs)
 

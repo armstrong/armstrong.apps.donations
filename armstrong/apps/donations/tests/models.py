@@ -5,6 +5,7 @@ from ._utils import generate_random_user
 from ._utils import TestCase
 
 from .. import backends
+from .. import models
 from ..models import (Donor, Donation, DonationType)
 
 
@@ -68,6 +69,23 @@ class DonationTestCase(TestCase):
         d.save()
         self.assertEqual(d.amount, donation_type.amount)
 
+    def test_code_calculate_is_called_on_save_if_present(self):
+        random_amount = "%s" % self.random_amount
+        d = Donation()
+        d.donor = self.random_donor
+        d.amount = "1000"
+
+        code = models.PromoCode.objects.create(code="random", amount="0")
+
+        calculate = fudge.Fake()
+        calculate.expects_call().with_args(d).returns(random_amount)
+        with fudge.patched_context(code, "calculate", calculate):
+            d.code = code
+            d.save()
+
+        self.assertEqual(random_amount, d.amount)
+        fudge.verify()
+
 
 class DonationWorkFlowTestCase(TestCase):
     def test_donations_can_be_free_form_amounts(self):
@@ -101,4 +119,4 @@ class DonationWorkFlowTestCase(TestCase):
             donor=donor,
             code=discount
         )
-        self.assertEqual(discount.calculate(donation_type.amount), d.amount)
+        self.assertEqual(discount.calculate(donation_type), d.amount)

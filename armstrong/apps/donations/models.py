@@ -73,8 +73,8 @@ class PromoCode(models.Model):
     def __unicode__(self):
         return u"%s (%s%%)" % (self.code, self.amount)
 
-    def calculate(self, amount):
-        return amount * (1 - self.amount / 100.0)
+    def calculate(self, donation):
+        return donation.amount * (1 - self.amount / 100.0)
 
 
 class Donation(models.Model):
@@ -89,7 +89,7 @@ class Donation(models.Model):
         if self.donation_type and not self.amount:
             self.amount = self.donation_type.amount
         if self.code:
-            self.amount = self.code.calculate(self.amount)
+            self.amount = self.code.calculate(self)
         return super(Donation, self).save(**kwargs)
 
     def purchase(self, form):

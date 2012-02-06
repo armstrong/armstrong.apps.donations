@@ -32,7 +32,7 @@ class BaseDonationForm(forms.Form):
     def get_donor_form(self, *args, **kwargs):
         return DonorForm(*args, **kwargs)
 
-    def _formset_is_populated_form(self, *args, **kwargs):
+    def _formset_is_populated(self, *args, **kwargs):
         # TODO: there has to be a better way to do this...?
         if "data" in kwargs:
             data = kwargs["data"]
@@ -46,7 +46,7 @@ class BaseDonationForm(forms.Form):
         return False
 
     def get_address_formset(self, *args, **kwargs):
-        if self._formset_is_populated_form(*args, **kwargs):
+        if self._formset_is_populated(*args, **kwargs):
             return DonorAddressFormset(*args, **kwargs)
         return DonorAddressFormset()
 

@@ -17,7 +17,7 @@ if hasattr(settings, "ARMSTRONG_INITIAL_STATE"):
 
 class BaseDonationForm(forms.Form):
     name = forms.CharField()
-    amount = forms.CharField()
+    amount = forms.FloatField()
     attribution = forms.CharField(required=False,
             help_text=text.get("donation.help_text.attribution"))
     anonymous = forms.BooleanField(required=False,

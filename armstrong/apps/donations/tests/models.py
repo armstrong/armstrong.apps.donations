@@ -58,6 +58,16 @@ class DonationTestCase(TestCase):
 
         fudge.verify()
 
+    def test_uses_donation_type_if_no_amount_provided(self):
+        donation_type = DonationType.objects.create(name="$10", monthly="10")
+        d = Donation()
+        d.donation_type = donation_type
+        d.donor = self.random_donor
+
+        self.assertEqual(None, d.amount, msg="sanity check")
+        d.save()
+        self.assertEqual(d.amount, donation_type.amount)
+
 
 class DonationWorkFlowTestCase(TestCase):
     def test_donations_can_be_free_form_amounts(self):

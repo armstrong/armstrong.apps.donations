@@ -114,16 +114,6 @@ class PromoCodeTestCase(TestCase):
         code = models.PromoCode.objects.create(code="free", amount=100)
         self.assertEqual(0, code.calculate(donation))
 
-    def test_converts_amount_to_float(self):
-        donation = fudge.Fake()
-        donation.has_attr(amount=u"100")
-
-        code = models.PromoCode.objects.create(code="free", amount=100)
-        try:
-            code.calculate(donation)
-        except TypeError:
-            self.fail("TypeError raised on PromoCode.calculate")
-
 
 class DonationWorkFlowTestCase(TestCase):
     def test_donations_can_be_free_form_amounts(self):

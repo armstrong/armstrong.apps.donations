@@ -87,6 +87,34 @@ class DonationTestCase(TestCase):
         fudge.verify()
 
 
+class PromoCodeTestCase(TestCase):
+    def test_calculate_returns_calculated_amount(self):
+        random_amount = self.random_amount
+        random_discount = random.randint(10, 30)
+        donation = fudge.Fake()
+        donation.has_attr(amount=random_amount)
+
+        code = models.PromoCode.objects.create(code="testing",
+                amount=random_discount)
+        expected = random_amount * (1 - random_discount / 100.00)
+        self.assertEqual(expected, code.calculate(donation))
+
+    def test_calculate_can_handle_amount_of_zero(self):
+        random_amount = self.random_amount
+        donation = fudge.Fake()
+        donation.has_attr(amount=random_amount)
+
+        code = models.PromoCode.objects.create(code="zero", amount=0)
+        self.assertEqual(random_amount, code.calculate(donation))
+
+    def test_calculate_can_handle_free_discount(self):
+        donation = fudge.Fake()
+        donation.has_attr(amount=100)
+
+        code = models.PromoCode.objects.create(code="free", amount=100)
+        self.assertEqual(0, code.calculate(donation))
+
+
 class DonationWorkFlowTestCase(TestCase):
     def test_donations_can_be_free_form_amounts(self):
         donor = self.random_donor

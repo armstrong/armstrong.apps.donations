@@ -62,9 +62,9 @@ class BaseDonationForm(forms.Form):
         if "promo_code" in self.data:
             donation.code = models.PromoCode.objects.get(
                     code=self.data["promo_code"])
-        if "donation_type" in self.data:
+        if self.add_prefix("donation_type") in self.data:
             donation.donation_type = models.DonationType.objects.get(
-                    name=self.data["donation_type"])
+                    name=self.data[self.add_prefix("donation_type")])
         donor = self.donor_form.save(commit=False)
         self.address_formset.save(donor)
         donor.save()

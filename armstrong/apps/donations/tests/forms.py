@@ -1,4 +1,5 @@
 from billing import CreditCard
+import random
 from ._utils import TestCase
 
 from .. import forms
@@ -24,6 +25,17 @@ class BaseDonationFormTestCase(TestCase):
             "amount": "100",
             "name": "Bob Example",
             "donation_type": random_type.name,
+        })
+        donation = form.save()
+        self.assertEqual(random_type, donation.donation_type)
+
+    def test_donation_type_works_with_prefixed_forms(self):
+        random_type = self.random_type
+        prefix = "random%d" % random.randint(1, 9)
+        form = forms.BaseDonationForm(prefix=prefix, data={
+            "%s-amount" % prefix: "100",
+            "%s-name" % prefix: "Bob Example",
+            "%s-donation_type" % prefix: random_type.name,
         })
         donation = form.save()
         self.assertEqual(random_type, donation.donation_type)

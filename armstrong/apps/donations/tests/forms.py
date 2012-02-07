@@ -18,6 +18,16 @@ class BaseDonationFormTestCase(TestCase):
         self.assertFalse(form.is_valid(donation_only=True))
         self.assertTrue("amount" in form.errors)
 
+    def test_donation_type_is_used_if_present(self):
+        random_type = self.random_type
+        form = forms.BaseDonationForm(data={
+            "amount": "100",
+            "name": "Bob Example",
+            "donation_type": random_type.name,
+        })
+        donation = form.save()
+        self.assertEqual(random_type, donation.donation_type)
+
 
 class CreditCardDonationFormTestCase(TestCase):
     def setUp(self):

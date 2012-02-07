@@ -6,6 +6,7 @@ import fudge
 import random
 
 from .. import forms
+from .. import models
 from ..models import (Donation, DonorAddress, Donor, DonationType, PromoCode)
 
 

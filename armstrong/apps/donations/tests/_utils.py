@@ -3,7 +3,6 @@ from armstrong.dev.tests.utils.users import generate_random_user
 import datetime
 from django.test.client import RequestFactory
 import fudge
-from fudge.inspector import arg
 import random
 
 from .. import forms

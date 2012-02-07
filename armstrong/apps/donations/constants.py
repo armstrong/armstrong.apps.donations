@@ -10,3 +10,5 @@ MONTH_CHOICES = zip(MONTHS, MONTHS)
 
 YEARS = range(now.year, now.year + 10)
 YEAR_CHOICES = zip(YEARS, YEARS)
+
+MAILING_SAME_AS_BILLING = "mailing_same_as_billing"

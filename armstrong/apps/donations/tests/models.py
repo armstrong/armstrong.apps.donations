@@ -5,6 +5,7 @@ from ._utils import generate_random_user
 from ._utils import TestCase
 
 from .. import backends
+from .. import models
 from ..models import (Donor, Donation, DonationType)
 
 
@@ -58,6 +59,61 @@ class DonationTestCase(TestCase):
 
         fudge.verify()
 
+    def test_uses_donation_type_if_no_amount_provided(self):
+        donation_type = DonationType.objects.create(name="$10", monthly="10")
+        d = Donation()
+        d.donation_type = donation_type
+        d.donor = self.random_donor
+
+        self.assertEqual(None, d.amount, msg="sanity check")
+        d.save()
+        self.assertEqual(d.amount, donation_type.amount)
+
+    def test_code_calculate_is_called_on_save_if_present(self):
+        random_amount = "%s" % self.random_amount
+        d = Donation()
+        d.donor = self.random_donor
+        d.amount = "1000"
+
+        code = models.PromoCode.objects.create(code="random", amount="0")
+
+        calculate = fudge.Fake()
+        calculate.expects_call().with_args(d).returns(random_amount)
+        with fudge.patched_context(code, "calculate", calculate):
+            d.code = code
+            d.save()
+
+        self.assertEqual(random_amount, d.amount)
+        fudge.verify()
+
+
+class PromoCodeTestCase(TestCase):
+    def test_calculate_returns_calculated_amount(self):
+        random_amount = self.random_amount
+        random_discount = random.randint(10, 30)
+        donation = fudge.Fake()
+        donation.has_attr(amount=random_amount)
+
+        code = models.PromoCode.objects.create(code="testing",
+                amount=random_discount)
+        expected = random_amount * (1 - random_discount / 100.00)
+        self.assertEqual(expected, code.calculate(donation))
+
+    def test_calculate_can_handle_amount_of_zero(self):
+        random_amount = self.random_amount
+        donation = fudge.Fake()
+        donation.has_attr(amount=random_amount)
+
+        code = models.PromoCode.objects.create(code="zero", amount=0)
+        self.assertEqual(random_amount, code.calculate(donation))
+
+    def test_calculate_can_handle_free_discount(self):
+        donation = fudge.Fake()
+        donation.has_attr(amount=100)
+
+        code = models.PromoCode.objects.create(code="free", amount=100)
+        self.assertEqual(0, code.calculate(donation))
+
 
 class DonationWorkFlowTestCase(TestCase):
     def test_donations_can_be_free_form_amounts(self):
@@ -91,4 +147,4 @@ class DonationWorkFlowTestCase(TestCase):
             donor=donor,
             code=discount
         )
-        self.assertEqual(discount.calculate(donation_type.amount), d.amount)
+        self.assertEqual(discount.calculate(donation_type), d.amount)

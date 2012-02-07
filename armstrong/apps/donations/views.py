@@ -2,7 +2,6 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.views.generic import TemplateView
 
-from . import forms
 from . import backends
 
 
@@ -16,7 +15,6 @@ class ThanksView(TemplateView):
 
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
-    donor_form_initial = {}
 
     @property
     def is_write_request(self):
@@ -52,34 +50,24 @@ class DonationFormView(TemplateView):
             })
         return kwargs
 
-    def get_form_kwargs(self, key):
-        kwargs = {"initial": getattr(self, "%s_form_initial" % key, None)}
+    def get_donation_form_kwargs(self):
+        kwargs = {"initial": getattr(self, "donation_form_initial", None)}
         return self.add_data_if_write_request(kwargs)
-
-    def get_formset_kwargs(self, key):
-        # TODO: make initial work
-        kwargs = {"initial": []}
-        return self.add_data_if_write_request(kwargs)
-
-    def get_donor_form(self):
-        return forms.DonorForm(**self.get_form_kwargs("donor"))
 
     def get_donation_form_class(self):
         return backends.get_backend().get_form_class()
 
     def get_donation_form(self):
         donation_form_class = self.get_donation_form_class()
-        return donation_form_class(**self.get_form_kwargs("donation"))
-
-    def get_address_formset(self):
-        return forms.DonorAddressFormset(**self.get_formset_kwargs("address"))
+        return donation_form_class(**self.get_donation_form_kwargs())
 
     def get_context_data(self, **kwargs):
+        donation_form = self.get_donation_form()
         context = {
             "form_action_url": self.form_action_url,
-            "donor_form": self.get_donor_form(),
-            "donation_form": self.get_donation_form(),
-            "address_formset": self.get_address_formset(),
+            "donor_form": donation_form.donor_form,
+            "donation_form": donation_form,
+            "address_formset": donation_form.address_formset,
         }
         context.update(kwargs)
         return context
@@ -88,34 +76,10 @@ class DonationFormView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
     def post(self, request, *args, **kwargs):
-        # TODO: validate and send to the appropriate places
-        # TODO: clean up so Travis doesn't cry
-        donor_form = self.get_donor_form()
-        if not donor_form.is_valid():
-            return self.forms_are_invalid()
-        donor = donor_form.save(commit=False)
         donation_form = self.get_donation_form()
         if not donation_form.is_valid():
             return self.forms_are_invalid()
-        donation = donation_form.save(commit=False)
-        address_formset = forms.DonorAddressFormset(data=request.POST)
-        if not address_formset.is_valid():
-            return self.forms_are_invalid()
-
-        # TODO: determine how to proceed with a mailing_same_as_billing and
-        #       DonorAddressFormset mismatch.  Possibly move logic into the
-        #       Formset so it can handle it appropriately instead of doing it
-        #       here in the view.
-        addresses = address_formset.save()
-        if len(addresses):
-            donor.address = addresses[0]
-            if len(addresses) is 2:
-                donor.mailing_address = addresses[1]
-            elif "mailing_same_as_billing" in request.POST:
-                donor.mailing_address = donor.address
-        donor.save()
-        donation.donor = donor
-        donation.save()
+        donation = donation_form.save()
         return self.forms_are_valid(donation=donation,
                 donation_form=donation_form)
 

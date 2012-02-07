@@ -1,16 +1,16 @@
 from armstrong.dev.tests.utils.backports import override_settings
-import datetime
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test.client import Client
+from functools import wraps
 import fudge
 import os
 import random
 from unittest import expectedFailure
 
-from ._utils import no_initial_patched_objects
 from ._utils import TestCase
 
+from .. import constants
 from .. import forms
 from .. import models
 from .. import views
@@ -106,7 +106,6 @@ class BaseDonationFormViewTestCase(TestCase):
 
 # TODO: move to armstrong.dev
 def get_response(func):
-    from functools import wraps
     @wraps(func)
     def inner(self):
         func(self, self.get_response())
@@ -187,6 +186,7 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         ])
         data = self.get_base_random_data(name=donor_name)
         data.update(address_formset)
+        del data[constants.MAILING_SAME_AS_BILLING]
 
         self.assertEqual(0, len(models.DonorAddress.objects.all()),
             msg="sanity check")
@@ -221,6 +221,17 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
 
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):
         data = self.random_post_data
+        data["mailing_same_as_billing"] = u"1"
+        self.client.post(self.url, data)
+        donor = models.Donor.objects.get(name=data["name"])
+        self.assertEqual(donor.address, donor.mailing_address)
+
+    def test_same_as_billing_overrides_second_address(self):
+        data = self.random_post_data
+        data.update(self.get_data_as_formset([
+            self.random_address_kwargs,
+            self.random_address_kwargs,
+        ]))
         data["mailing_same_as_billing"] = u"1"
         self.client.post(self.url, data)
         donor = models.Donor.objects.get(name=data["name"])

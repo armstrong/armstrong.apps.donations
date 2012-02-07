@@ -59,9 +59,9 @@ class BaseDonationForm(forms.Form):
     # TODO: support commit=True?
     def save(self, **kwargs):
         donation = models.Donation(**self.get_donation_kwargs())
-        if "promo_code" in self.data:
+        if self.add_prefix("promo_code") in self.data:
             donation.code = models.PromoCode.objects.get(
-                    code=self.data["promo_code"])
+                    code=self.data[self.add_prefix("promo_code")])
         if self.add_prefix("donation_type") in self.data:
             donation.donation_type = models.DonationType.objects.get(
                     name=self.data[self.add_prefix("donation_type")])

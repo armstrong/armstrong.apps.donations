@@ -14,6 +14,18 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual(promo_code, donation.code)
 
+    def test_applies_promo_code_with_prefixed_form(self):
+        prefix = "random%d" % random.randint(1, 9)
+        promo_code = self.random_discount
+        data = {
+            "%s-amount" % prefix: "100",
+            "%s-name" % prefix: "Bob Example",
+            "%s-promo_code" % prefix: promo_code.code,
+        }
+        form = forms.BaseDonationForm(prefix=prefix, data=data)
+        donation = form.save()
+        self.assertEqual(promo_code, donation.code)
+
     def test_errors_if_more_than_two_digits_are_provided(self):
         form = forms.BaseDonationForm(data={"amount": "100.123"})
         self.assertFalse(form.is_valid(donation_only=True))

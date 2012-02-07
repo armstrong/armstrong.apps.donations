@@ -120,7 +120,8 @@ BaseDonorAddressFormset = modelformset_factory(models.DonorAddress)
 class DonorAddressFormset(BaseDonorAddressFormset):
     def __init__(self, data=None, **kwargs):
         self.mailing_same_as_billing = False
-        if data and MAILING_SAME_AS_BILLING in data:
+        if (data and MAILING_SAME_AS_BILLING in data
+                and data[MAILING_SAME_AS_BILLING]):
             self.mailing_same_as_billing = True
         super(DonorAddressFormset, self).__init__(data=data, **kwargs)
 
@@ -128,8 +129,8 @@ class DonorAddressFormset(BaseDonorAddressFormset):
         instances = super(DonorAddressFormset, self).save(**kwargs)
         if len(instances):
             donor.address = instances[0]
-            if len(instances) is 2:
-                donor.mailing_address = instances[1]
-            elif self.mailing_same_as_billing:
+            if self.mailing_same_as_billing:
                 donor.mailing_address = donor.address
+            elif len(instances) > 1:
+                donor.mailing_address = instances[1]
         return instances

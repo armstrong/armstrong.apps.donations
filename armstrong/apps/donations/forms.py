@@ -40,16 +40,18 @@ class BaseDonationForm(forms.Form):
         return DonorAddressFormset()
 
     def get_donation_kwargs(self):
-        if not self.is_valid():
-            # TODO: raise here?
+        if not self.is_valid(donation_only=True):
             return {}
         return {
             "amount": self.cleaned_data["amount"],
         }
 
-    def is_valid(self):
+    def is_valid(self, donation_only=False):
+        donation_is_valid = super(BaseDonationForm, self).is_valid()
+        if donation_only:
+            return donation_is_valid
         return all([
-            super(BaseDonationForm, self).is_valid(),
+            donation_is_valid,
             self.donor_form.is_valid(),
             self.address_formset.is_valid(),
         ])

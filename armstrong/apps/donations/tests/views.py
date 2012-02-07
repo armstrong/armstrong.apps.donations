@@ -163,6 +163,23 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         donation = models.Donation.objects.get(donor=donor)
         self.assertEqual(donation.amount, random_amount)
 
+    def test_uses_promo_code_if_available(self):
+        promo_code = self.random_discount
+        donor_name = self.random_donor_name
+        random_amount = self. random_amount
+        data = self.get_base_random_data(name=donor_name, amount=random_amount,
+                promo_code=promo_code.code)
+        data.update(self.get_data_as_formset())
+
+        self.client.post(self.url, data)
+        donor = models.Donor.objects.get(name=donor_name)
+        donation = models.Donation.objects.get(donor=donor)
+        self.assertEqual(promo_code, donation.code)
+
+        d = fudge.Fake().has_attr(amount=random_amount)
+        self.assertEqual("%d" % promo_code.calculate(d),
+                "%d" % donation.amount)
+
     def test_saves_address_if_present(self):
         donor_name = self.random_donor_name
         address_kwargs = self.random_address_kwargs

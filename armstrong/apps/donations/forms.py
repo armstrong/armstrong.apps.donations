@@ -17,7 +17,7 @@ if hasattr(settings, "ARMSTRONG_INITIAL_STATE"):
 
 class BaseDonationForm(forms.Form):
     name = forms.CharField()
-    amount = forms.DecimalField()
+    amount = forms.DecimalField(decimal_places=2)
     attribution = forms.CharField(required=False,
             help_text=text.get("donation.help_text.attribution"))
     anonymous = forms.BooleanField(required=False,
@@ -40,16 +40,18 @@ class BaseDonationForm(forms.Form):
         return DonorAddressFormset()
 
     def get_donation_kwargs(self):
-        if not self.is_valid():
-            # TODO: raise here?
+        if not self.is_valid(donation_only=True):
             return {}
         return {
             "amount": self.cleaned_data["amount"],
         }
 
-    def is_valid(self):
+    def is_valid(self, donation_only=False):
+        donation_is_valid = super(BaseDonationForm, self).is_valid()
+        if donation_only:
+            return donation_is_valid
         return all([
-            super(BaseDonationForm, self).is_valid(),
+            donation_is_valid,
             self.donor_form.is_valid(),
             self.address_formset.is_valid(),
         ])
@@ -57,6 +59,9 @@ class BaseDonationForm(forms.Form):
     # TODO: support commit=True?
     def save(self, **kwargs):
         donation = models.Donation(**self.get_donation_kwargs())
+        if "promo_code" in self.data:
+            donation.code = models.PromoCode.objects.get(
+                    code=self.data["promo_code"])
         donor = self.donor_form.save(commit=False)
         self.address_formset.save(donor)
         donor.save()

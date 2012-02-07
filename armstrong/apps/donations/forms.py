@@ -32,21 +32,10 @@ class BaseDonationForm(forms.Form):
     def get_donor_form(self, *args, **kwargs):
         return DonorForm(*args, **kwargs)
 
-    def _formset_is_populated(self, *args, **kwargs):
-        # TODO: there has to be a better way to do this...?
-        if "data" in kwargs:
-            data = kwargs["data"]
-        elif len(args):
-            data = args[0]
-        else:
-            data = {}
-        for key in data.keys():
-            if key.startswith("form-"):
-                return True
-        return False
-
     def get_address_formset(self, *args, **kwargs):
-        if self._formset_is_populated(*args, **kwargs):
+        data = kwargs["data"] if "data" in kwargs else (
+                args[0] if len(args) else {})
+        if "form-TOTAL_FORMS" in data:
             return DonorAddressFormset(*args, **kwargs)
         return DonorAddressFormset()
 

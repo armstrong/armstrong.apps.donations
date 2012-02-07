@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.core.exceptions import ValidationError
 import fudge
 import random
@@ -96,7 +97,9 @@ class PromoCodeTestCase(TestCase):
 
         code = models.PromoCode.objects.create(code="testing",
                 amount=random_discount)
-        expected = random_amount * (1 - random_discount / 100.00)
+        expected = (
+                Decimal(random_amount)
+                * Decimal(1 - random_discount / 100.00))
         self.assertEqual(expected, code.calculate(donation))
 
     def test_calculate_can_handle_amount_of_zero(self):

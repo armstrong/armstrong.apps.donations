@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.localflavor.us import models as us
 from django.db import models
@@ -74,7 +75,7 @@ class PromoCode(models.Model):
         return u"%s (%s%%)" % (self.code, self.amount)
 
     def calculate(self, donation):
-        return donation.amount * (1 - self.amount / 100.0)
+        return donation.amount * Decimal(1 - self.amount / 100.0)
 
 
 class Donation(models.Model):

@@ -1,8 +1,6 @@
 from authorize import aim
-import billing
 from django.conf import settings
 import fudge
-from fudge.inspector import arg
 import os
 import random
 import unittest

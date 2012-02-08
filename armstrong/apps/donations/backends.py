@@ -1,6 +1,7 @@
 from armstrong.utils.backends import GenericBackend
 from authorize import aim
 from billing import get_gateway
+from django.conf import settings
 
 from . import forms
 
@@ -10,6 +11,7 @@ class AuthorizeNetBackend(object):
         if api_class is None:
             api_class = aim.Api
         self.api_class = api_class
+        self.settings = settings
 
     def get_form_class(self):
         return forms.CreditCardDonationForm

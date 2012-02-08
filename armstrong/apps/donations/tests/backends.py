@@ -1,5 +1,6 @@
 from authorize import aim
 import billing
+from django.conf import settings
 import fudge
 from fudge.inspector import arg
 import random
@@ -18,6 +19,10 @@ class AuthorizeNetBackendTestCase(TestCase):
                 amount=donation.amount)
         donation_form = forms.CreditCardDonationForm(data)
         return donation, donation_form
+
+    def test_settings_defaults_to_django_settings(self):
+        backend = backends.AuthorizeNetBackend()
+        self.assertEqual(backend.settings, settings)
 
     def test_api_class_defaults_to_authorize_api(self):
         backend = backends.AuthorizeNetBackend()

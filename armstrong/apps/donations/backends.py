@@ -1,16 +1,18 @@
 from armstrong.utils.backends import GenericBackend
 from authorize import aim
 from billing import get_gateway
-from django.conf import settings
+from django.conf import settings as django_settings
 
 from . import forms
 
 
 class AuthorizeNetBackend(object):
-    def __init__(self, api_class=None):
+    def __init__(self, api_class=None, settings=None):
         if api_class is None:
             api_class = aim.Api
         self.api_class = api_class
+        if settings is None:
+            settings = django_settings
         self.settings = settings
 
     def get_form_class(self):

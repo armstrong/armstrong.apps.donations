@@ -24,6 +24,11 @@ class AuthorizeNetBackendTestCase(TestCase):
         backend = backends.AuthorizeNetBackend()
         self.assertEqual(backend.settings, settings)
 
+    def test_settings_can_be_injected(self):
+        r = random.randint(10000, 20000)
+        backend = backends.AuthorizeNetBackend(settings=r)
+        self.assertEqual(backend.settings, r)
+
     def test_api_class_defaults_to_authorize_api(self):
         backend = backends.AuthorizeNetBackend()
         self.assertEqual(backend.api_class, aim.Api)

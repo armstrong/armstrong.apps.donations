@@ -2,6 +2,7 @@ from armstrong.dev.tasks import *
 import os
 
 
+os.environ["FULL_TEST_SUITE"] = "1"
 settings = {
     'DEBUG': True,
     'TEMPLATE_DEBUG': True,

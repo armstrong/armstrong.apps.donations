@@ -3,7 +3,9 @@ import billing
 from django.conf import settings
 import fudge
 from fudge.inspector import arg
+import os
 import random
+import unittest
 
 from ._utils import TestCase
 
@@ -103,6 +105,26 @@ class AuthorizeNetBackendTestCase(TestCase):
         with fudge.patched_context(backend, "get_api", get_api):
             backend.new_purchase(donation, donation_form)
         fudge.verify()
+
+    @unittest.skipIf(os.environ.get("FULL_TEST_SUITE", False) != "1",
+            "Only run when FULL_TEST_SUITE env is set")
+    def test_can_communicate_with_real_authorize_backend(self):
+        class TestableApi(aim.Api):
+            def __init__(self, *args, **kwargs):
+                kwargs["is_test"] = True
+                super(TestableApi, self).__init__(*args, **kwargs)
+
+            def transaction(self, **kwargs):
+                kwargs["test_request"] = u"TRUE"
+                return super(TestableApi, self).transaction(**kwargs)
+
+        donation, donation_form = self.random_donation_and_form
+        donation_form.data["card_number"] = u"4222222222222"  # Set to test CC
+        donation.amount = 1
+        backend = backends.AuthorizeNetBackend(api_class=TestableApi,
+                settings=self.test_settings)
+        result = backend.new_purchase(donation, donation_form)
+        self.assertTrue(result["status"])
 
     def test_dispatches_to_gateway_purchase(self):
         def is_credit_card(s):

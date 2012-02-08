@@ -1,3 +1,4 @@
+from authorize import aim
 import billing
 import fudge
 from fudge.inspector import arg
@@ -17,6 +18,10 @@ class AuthorizeNetBackendTestCase(TestCase):
                 amount=donation.amount)
         donation_form = forms.CreditCardDonationForm(data)
         return donation, donation_form
+
+    def test_api_class_defaults_to_authorize_api(self):
+        backend = backends.AuthorizeNetBackend()
+        self.assertEqual(backend.api_class, aim.Api)
 
     def test_get_form_returns_credit_card_form(self):
         backend = backends.get_backend()

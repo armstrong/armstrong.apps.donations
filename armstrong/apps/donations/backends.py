@@ -1,10 +1,14 @@
 from armstrong.utils.backends import GenericBackend
+from authorize import aim
 from billing import get_gateway
 
 from . import forms
 
 
 class AuthorizeNetBackend(object):
+    def __init__(self):
+        self.api_class = aim.Api
+
     def get_form_class(self):
         return forms.CreditCardDonationForm
 

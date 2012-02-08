@@ -13,11 +13,22 @@ from .. import forms
 
 class AuthorizeNetBackendTestCase(TestCase):
     @property
+    def test_settings(self):
+        fake = fudge.Fake()
+        fake.has_attr(AUTHORIZE={
+            # Login/password 2k4NuTk6cS
+            "LOGIN": u"5A77vX8HxE",
+            "KEY": u"6T29u7p67xKeEW33",
+        })
+        return fake
+
+    @property
     def random_donation_and_form(self):
         donation = self.random_donation
         data = self.get_base_random_data(name=donation.donor.name,
                 amount=donation.amount)
         donation_form = forms.CreditCardDonationForm(data)
+        donation_form.is_valid()
         return donation, donation_form
 
     def test_settings_defaults_to_django_settings(self):
@@ -66,6 +77,32 @@ class AuthorizeNetBackendTestCase(TestCase):
         backend = backends.get_backend()
         self.assertEqual(backend.get_form_class(),
                 forms.CreditCardDonationForm)
+
+    def test_dispatches_to_authorize_to_create_transaction(self):
+        donation, donation_form = self.random_donation_and_form
+
+        api = fudge.Fake("api")
+        api.expects("transaction").with_args(
+                amount=donation.amount,
+                card_num=donation_form.cleaned_data["card_number"],
+                card_code=donation_form.cleaned_data["ccv_code"],
+                exp_date=u"%02d-%04d" % (
+                        int(donation_form.cleaned_data["expiration_month"]),
+                        int(donation_form.cleaned_data["expiration_year"])),
+                description=u"Donation: $%d" % donation.amount,
+                first_name=unicode(donation.donor.name.split(" ")[0]),
+                last_name=unicode(donation.donor.name.split(" ", 1)[-1]),
+                address=donation.donor.address.address,
+                city=donation.donor.address.city,
+                state=donation.donor.address.state,
+                zip=donation.donor.address.zipcode,
+        ).returns({"reason_code": u"1"})
+        get_api = fudge.Fake().expects_call().returns(api)
+
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "get_api", get_api):
+            backend.new_purchase(donation, donation_form)
+        fudge.verify()
 
     def test_dispatches_to_gateway_purchase(self):
         def is_credit_card(s):

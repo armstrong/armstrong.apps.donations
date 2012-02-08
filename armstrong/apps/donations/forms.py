@@ -87,6 +87,16 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
+    def get_data_for_charge(self, donor):
+        self.is_valid()
+        return {
+            "card_num": self.cleaned_data["card_number"],
+            "card_code": self.cleaned_data["ccv_code"],
+            "exp_date": u"%02d-%04d" % (
+                    int(self.cleaned_data["expiration_month"]),
+                    int(self.cleaned_data["expiration_year"])),
+        }
+
     def get_credit_card(self, donor):
         self.is_valid()  # TODO: do something when bad data is here
 

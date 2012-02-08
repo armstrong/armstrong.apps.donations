@@ -22,6 +22,28 @@ class AuthorizeNetBackend(object):
     def get_form_class(self):
         return forms.CreditCardDonationForm
 
+    def new_purchase(self, donation, form):
+        api = self.get_api()
+        data = form.get_data_for_charge(donation.donor)
+        donor = donation.donor
+        data.update({
+            "amount": donation.amount,
+            "description": u"Donation: $%d" % donation.amount,
+            "first_name": unicode(donor.name.split(" ")[0]),
+            "last_name": unicode(donor.name.split(" ", 1)[-1]),
+
+            # TODO: extract and be conditional
+            "address": donor.address.address,
+            "city": donor.address.city,
+            "state": donor.address.state,
+            "zip": donor.address.zipcode,
+        })
+        response = api.transaction(**data)
+        return {
+            "status": response["reason_code"] == u"1",
+            "response": response,
+        }
+
     def purchase(self, donation, form):
         authorize = get_gateway("authorize_net")
         result = authorize.purchase(donation.amount,

@@ -17,7 +17,7 @@ class AuthorizeNetBackend(object):
 
     def get_api(self):
         return self.api_class(self.settings.AUTHORIZE["LOGIN"],
-                self.settings.AUTHORIZE["KEY"])
+                self.settings.AUTHORIZE["KEY"], delimiter=u"|")
 
     def get_form_class(self):
         return forms.CreditCardDonationForm

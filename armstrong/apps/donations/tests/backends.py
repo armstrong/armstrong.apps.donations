@@ -48,8 +48,11 @@ class AuthorizeNetBackendTestCase(TestCase):
             "KEY": random_key,
         })
         api_class = fudge.Fake()
+
+        # Note that delimiter is included here because authorize's code
+        # can't even keep track of what deliminter it wants to use!
         (api_class.expects_call()
-                .with_args(random_login, random_key)
+                .with_args(random_login, random_key, delimiter=u"|")
                 .returns(random_return))
         fudge.clear_calls()
 

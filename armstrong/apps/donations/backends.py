@@ -6,8 +6,10 @@ from . import forms
 
 
 class AuthorizeNetBackend(object):
-    def __init__(self):
-        self.api_class = aim.Api
+    def __init__(self, api_class=None):
+        if api_class is None:
+            api_class = aim.Api
+        self.api_class = api_class
 
     def get_form_class(self):
         return forms.CreditCardDonationForm

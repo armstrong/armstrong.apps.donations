@@ -23,6 +23,11 @@ class AuthorizeNetBackendTestCase(TestCase):
         backend = backends.AuthorizeNetBackend()
         self.assertEqual(backend.api_class, aim.Api)
 
+    def test_api_class_can_be_injected(self):
+        r = random.randint(10000, 20000)
+        backend = backends.AuthorizeNetBackend(api_class=r)
+        self.assertEqual(backend.api_class, r)
+
     def test_get_form_returns_credit_card_form(self):
         backend = backends.get_backend()
         self.assertEqual(backend.get_form_class(),

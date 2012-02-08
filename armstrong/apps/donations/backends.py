@@ -15,6 +15,10 @@ class AuthorizeNetBackend(object):
             settings = django_settings
         self.settings = settings
 
+    def get_api(self):
+        return self.api_class(self.settings.AUTHORIZE["LOGIN"],
+                self.settings.AUTHORIZE["KEY"])
+
     def get_form_class(self):
         return forms.CreditCardDonationForm
 

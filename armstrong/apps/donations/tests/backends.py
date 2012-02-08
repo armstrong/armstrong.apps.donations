@@ -38,6 +38,27 @@ class AuthorizeNetBackendTestCase(TestCase):
         backend = backends.AuthorizeNetBackend(api_class=r)
         self.assertEqual(backend.api_class, r)
 
+    def test_api_instantiates_api_class_with_configured_settings(self):
+        random_login = "some random login %d" % random.randint(100, 200)
+        random_key = "some random key %d" % random.randint(100, 200)
+        random_return = "some random return %d" % random.randint(100, 200)
+        settings = fudge.Fake()
+        settings.has_attr(AUTHORIZE={
+            "LOGIN": random_login,
+            "KEY": random_key,
+        })
+        api_class = fudge.Fake()
+        (api_class.expects_call()
+                .with_args(random_login, random_key)
+                .returns(random_return))
+        fudge.clear_calls()
+
+        backend = backends.AuthorizeNetBackend(api_class=api_class,
+                settings=settings)
+        result = backend.get_api()
+        self.assertEqual(result, random_return)
+        fudge.verify()
+
     def test_get_form_returns_credit_card_form(self):
         backend = backends.get_backend()
         self.assertEqual(backend.get_form_class(),

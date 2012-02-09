@@ -16,6 +16,7 @@ class AuthorizeNetBackend(object):
         if settings is None:
             settings = django_settings
         self.settings = settings
+        self.recurring_api_class = arb.Api
 
     def get_api(self):
         return self.api_class(self.settings.AUTHORIZE["LOGIN"],

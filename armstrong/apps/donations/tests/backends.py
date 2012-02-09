@@ -42,7 +42,7 @@ class AuthorizeNetBackendTestCase(TestCase):
         donation = self.random_donation
         data = self.get_base_random_data(name=donation.donor.name,
                 amount=donation.amount)
-        donation_form = forms.CreditCardDonationForm(data)
+        donation_form = forms.AuthorizeDonationForm(data)
         donation_form.is_valid()
         return donation, donation_form
 
@@ -91,7 +91,7 @@ class AuthorizeNetBackendTestCase(TestCase):
     def test_get_form_returns_credit_card_form(self):
         backend = backends.get_backend()
         self.assertEqual(backend.get_form_class(),
-                forms.CreditCardDonationForm)
+                forms.AuthorizeDonationForm)
 
     def test_dispatches_to_authorize_to_create_transaction(self):
         donation, donation_form = self.random_donation_and_form

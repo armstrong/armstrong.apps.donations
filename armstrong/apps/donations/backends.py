@@ -25,7 +25,7 @@ class AuthorizeNetBackend(object):
         pass
 
     def get_form_class(self):
-        return forms.CreditCardDonationForm
+        return forms.AuthorizeDonationForm
 
     def purchase(self, donation, form):
         if donation.donation_type and donation.donation_type.repeat > 0:

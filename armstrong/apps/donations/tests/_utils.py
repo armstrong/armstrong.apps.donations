@@ -38,10 +38,10 @@ class TestCase(ArmstrongTestCase):
     @property
     def random_address_kwargs(self):
         return {
-            "address": "%d Some St" % random.randint(1000, 2000),
-            "city": "Anytown",
-            "state": "TX",
-            "zipcode": "787%02d" % random.randint(1, 99),
+            "address": u"%d Some St" % random.randint(1000, 2000),
+            "city": u"Anytown",
+            "state": u"TX",
+            "zipcode": u"787%02d" % random.randint(1, 99),
         }
 
     @property

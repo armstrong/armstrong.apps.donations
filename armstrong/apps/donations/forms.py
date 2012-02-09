@@ -1,4 +1,3 @@
-import billing
 from django import forms
 from django.conf import settings
 from django.forms.models import modelformset_factory
@@ -90,19 +89,15 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
-    def get_credit_card(self, donor):
-        self.is_valid()  # TODO: do something when bad data is here
-
-        name = donor.name
-        first_name, last_name = name.split(" ", 1)
-        return billing.CreditCard(
-            first_name=first_name,
-            last_name=last_name,
-            number=self.cleaned_data["card_number"],
-            month=self.cleaned_data["expiration_month"],
-            year=self.cleaned_data["expiration_year"],
-            verification_value=self.cleaned_data["ccv_code"],
-        )
+    def get_data_for_charge(self, donor):
+        self.is_valid()
+        return {
+            "card_num": self.cleaned_data["card_number"],
+            "card_code": self.cleaned_data["ccv_code"],
+            "exp_date": u"%02d-%04d" % (
+                    int(self.cleaned_data["expiration_month"]),
+                    int(self.cleaned_data["expiration_year"])),
+        }
 
 
 class DonorForm(forms.ModelForm):

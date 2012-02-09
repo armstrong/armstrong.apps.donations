@@ -71,6 +71,14 @@ class TestCase(ArmstrongTestCase):
         )
 
     @property
+    def random_monthly_type(self):
+        return DonationType.objects.create(
+            name="Basic $20/mo",
+            monthly=20,
+            repeat=9999,
+        )
+
+    @property
     def random_discount(self):
         r = random.randint(10, 30)
         return PromoCode.objects.create(

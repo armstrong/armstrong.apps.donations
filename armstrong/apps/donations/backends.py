@@ -1,6 +1,8 @@
 from armstrong.utils.backends import GenericBackend
 from authorize import aim
+from authorize import arb
 from billing import get_gateway
+import datetime
 from django.conf import settings as django_settings
 
 from . import forms
@@ -19,10 +21,36 @@ class AuthorizeNetBackend(object):
         return self.api_class(self.settings.AUTHORIZE["LOGIN"],
                 self.settings.AUTHORIZE["KEY"], delimiter=u"|")
 
+    def get_recurring_api(self):
+        pass
+
     def get_form_class(self):
         return forms.CreditCardDonationForm
 
     def purchase(self, donation, form):
+        if donation.donation_type and donation.donation_type.repeat > 0:
+            return self.recurring_purchase(donation, form)
+        else:
+            return self.onetime_purchase(donation, form)
+
+    def recurring_purchase(self, donation, form):
+        today = datetime.date.today()
+        start_date = u"%s" % ((today + datetime.timedelta(days=30))
+                .strftime("%Y-%m-%d"))
+        api = self.get_recurring_api()
+        data = form.get_data_for_charge(donation.donor, recurring=True)
+        data.update({
+            "amount": donation.amount,
+            "interval_unit": arb.MONTHS_INTERVAL,
+            "interval_length": u"1",
+            "bill_first_name": u"%s" % donation.donor.name.split(" ")[0],
+            "bill_last_name": u"%s" % donation.donor.name.split(" ", 1)[-1],
+            "total_occurrences": donation.donation_type.repeat,
+            "start_date": start_date,
+        })
+        api.create_subscription(**data)
+
+    def onetime_purchase(self, donation, form):
         api = self.get_api()
         data = form.get_data_for_charge(donation.donor)
         donor = donation.donor

@@ -97,6 +97,27 @@ class AuthorizeNetBackendTestCase(TestCase):
         backend = backends.AuthorizeNetBackend(recurring_api_class=r)
         self.assertEqual(backend.recurring_api_class, r)
 
+    def test_get_recurring_api_instantiates_with_configured_settings(self):
+        random_login = "some random login %d" % random.randint(100, 200)
+        random_key = "some random key %d" % random.randint(100, 200)
+        random_return = "some random return %d" % random.randint(100, 200)
+        settings = fudge.Fake().has_attr(
+            AUTHORIZE={
+                "LOGIN": random_login,
+                "KEY": random_key,
+        })
+
+        recurring_api_class = (fudge.Fake().expects_call()
+                .with_args(random_login, random_key)
+                .returns(random_return))
+        fudge.clear_calls()
+
+        backend = backends.AuthorizeNetBackend(settings=settings,
+                    recurring_api_class=recurring_api_class)
+        result = backend.get_recurring_api()
+        self.assertEqual(result, random_return)
+        fudge.verify()
+
     def test_get_form_returns_credit_card_form(self):
         backend = backends.get_backend()
         self.assertEqual(backend.get_form_class(),

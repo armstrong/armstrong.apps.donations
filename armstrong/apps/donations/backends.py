@@ -26,7 +26,8 @@ class AuthorizeNetBackend(object):
                 self.settings.AUTHORIZE["KEY"], delimiter=u"|")
 
     def get_recurring_api(self):
-        pass
+        return self.recurring_api_class(self.settings.AUTHORIZE["LOGIN"],
+                self.settings.AUTHORIZE["KEY"])
 
     def get_form_class(self):
         return forms.AuthorizeDonationForm

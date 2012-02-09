@@ -9,14 +9,17 @@ from . import forms
 
 
 class AuthorizeNetBackend(object):
-    def __init__(self, api_class=None, settings=None):
+    def __init__(self, api_class=None, recurring_api_class=None,
+            settings=None):
         if api_class is None:
             api_class = aim.Api
         self.api_class = api_class
         if settings is None:
             settings = django_settings
         self.settings = settings
-        self.recurring_api_class = arb.Api
+        if recurring_api_class is None:
+            recurring_api_class = arb.Api
+        self.recurring_api_class = recurring_api_class
 
     def get_api(self):
         return self.api_class(self.settings.AUTHORIZE["LOGIN"],

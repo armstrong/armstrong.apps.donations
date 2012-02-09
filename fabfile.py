@@ -2,6 +2,7 @@ from armstrong.dev.tasks import *
 import os
 
 
+os.environ["FULL_TEST_SUITE"] = "1"
 settings = {
     'DEBUG': True,
     'TEMPLATE_DEBUG': True,
@@ -24,8 +25,11 @@ settings = {
     'MERCHANT_TEST_MODE': True,
 
     # For testing against Authorize
-    'AUTHORIZE_LOGIN_ID': u'4u42L5wJu',
-    'AUTHORIZE_TRANSACTION_KEY': u'5V6E7x6bFx4z7Z5e',
+    "AUTHORIZE": {
+        # Login/password 2k4NuTk6cS
+        "LOGIN": u"5A77vX8HxE",
+        "KEY": u"6T29u7p67xKeEW33",
+    }
 }
 
 main_app = "donations"

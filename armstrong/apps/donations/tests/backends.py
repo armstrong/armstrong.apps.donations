@@ -252,6 +252,21 @@ class AuthorizeNetBackendTestCase(TestCase):
                 backend.purchase(donation, donation_form)
         fudge.verify()
 
+    def test_does_not_call_recurring_purchase_on_failed_onetime_purchase(self):
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+
+        recurring_purchase = fudge.Fake()
+        onetime_purchase = (fudge.Fake().expects_call()
+                    .with_args(donation, donation_form)
+                    .returns({"status": False}))
+
+        backend = backends.AuthorizeNetBackend()
+        with stub_recurring_purchase(backend, recurring_purchase):
+            with stub_onetime_purchase(backend, onetime_purchase):
+                backend.purchase(donation, donation_form)
+        fudge.verify()
+
 
 from contextlib import contextmanager
 

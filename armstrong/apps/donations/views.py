@@ -24,6 +24,10 @@ class DonationFormView(TemplateView):
         return super(DonationFormView, self).get_template_names()
 
     @property
+    def requires_confirmation(self):
+        return True
+
+    @property
     def is_write_request(self):
         return self.request.method in ("POST", "PUT")
 

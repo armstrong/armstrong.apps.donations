@@ -1,6 +1,8 @@
 from armstrong.dev.tests.utils.backports import override_settings
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.template.response import TemplateResponse
 from django.test.client import Client
 from functools import wraps
 import fudge
@@ -62,18 +64,24 @@ class BaseDonationFormViewTestCase(TestCase):
 
     def assert_in_context(self, response, name):
         # TODO: move this into armstrong.dev
-        self.assertTrue(name in response.context,
+        context = (response.context if hasattr(response, "context")
+                else response.context_data)
+        self.assertTrue(name in context,
                 msg="%s was not in the context" % name)
 
     def assert_type_in_context(self, response, name, expected_type):
         self.assert_in_context(response, name)
-        self.assertTrue(isinstance(response.context[name], expected_type),
+        context = (response.context if hasattr(response, "context")
+                else response.context_data)
+        self.assertTrue(isinstance(context[name], expected_type),
                 msg="%s in the context, but does not have a class of %s" % (
                         name, expected_type.__name__))
 
     def assert_value_in_context(self, response, name, expected_value):
         self.assert_in_context(response, name)
-        self.assertEqual(response.context[name], expected_value,
+        context = (response.context if hasattr(response, "context")
+                else response.context_data)
+        self.assertEqual(context[name], expected_value,
                 msg="%s in the context, but not equal to '%s'" % (
                         name, expected_value))
 
@@ -138,6 +146,18 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         self.assertIsA(donation_form, forms.CreditCardDonationForm)
 
 
+def forms_are_valid_response(confirmed=False):
+    def outer(func):
+        @wraps(func)
+        def inner(self, *args, **kwargs):
+            donation, form = self.random_donation_and_form
+            v = self.get_post_view(confirmed=confirmed)
+            response = v.forms_are_valid(donation, form)
+            func(self, response)
+        return inner
+    return outer
+
+
 class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
     view_name = "donations_form_confirm"
 
@@ -171,6 +191,18 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
     def test_requires_confirmation_is_false_if_confirmed(self):
         v = self.get_post_view(confirmed=True)
         self.assertFalse(v.requires_confirmation)
+
+    @forms_are_valid_response()
+    def test_forms_are_valid_re_renders_if_confirmation_is_required(self, r):
+        self.assertIsA(r, TemplateResponse)
+
+    @forms_are_valid_response()
+    def test_contains_confirmation_required_in_context(self, r):
+        self.assert_value_in_context(r, "confirmation_required", True)
+
+    @forms_are_valid_response(confirmed=True)
+    def test_redirects_on_confirmed(self, r):
+        self.assertIsA(r, HttpResponseRedirect)
 
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):

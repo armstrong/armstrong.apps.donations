@@ -172,3 +172,12 @@ class TestCase(ArmstrongTestCase):
         fake = fudge.Fake()
         fake.provides("get_backend").returns(backend)
         return fake
+
+    @property
+    def random_donation_and_form(self):
+        donation = self.random_donation
+        data = self.get_base_random_data(name=donation.donor.name,
+                amount=donation.amount)
+        donation_form = forms.AuthorizeDonationForm(data)
+        donation_form.is_valid()
+        return donation, donation_form

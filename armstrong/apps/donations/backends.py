@@ -1,7 +1,6 @@
 from armstrong.utils.backends import GenericBackend
 from authorize import aim
 from authorize import arb
-from billing import get_gateway
 import datetime
 from django.conf import settings as django_settings
 

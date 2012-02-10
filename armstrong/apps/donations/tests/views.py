@@ -138,6 +138,28 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         self.assertIsA(donation_form, forms.CreditCardDonationForm)
 
 
+class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
+    view_name = "donations_form_confirm"
+
+    @property
+    def fake_post_request(self):
+        return self.factory.post(self.url, {})
+
+    @property
+    def fake_get_request(self):
+        return self.factory.get(self.url)
+
+    def test_swaps_templates_on_confirmation(self):
+        v = views.DonationFormView(confirm=True)
+        v.request = self.fake_post_request
+        self.assertEqual(v.confirm_template_name, v.get_template_names()[0])
+
+    def test_uses_regular_template_on_get_request(self):
+        v = views.DonationFormView(confirm=True)
+        v.request = self.fake_get_request
+        self.assertEqual(v.template_name, v.get_template_names()[0])
+
+
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     @property
     def random_post_data(self):

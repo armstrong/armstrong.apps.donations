@@ -15,6 +15,13 @@ class ThanksView(TemplateView):
 
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
+    confirm_template_name = "armstrong/donations/confirm.html"
+    confirm = False
+
+    def get_template_names(self):
+        if self.confirm and self.is_write_request:
+            return [self.confirm_template_name]
+        return super(DonationFormView, self).get_template_names()
 
     @property
     def is_write_request(self):

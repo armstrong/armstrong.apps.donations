@@ -37,7 +37,8 @@ class AuthorizeNetBackend(object):
         if not result["status"]:
             return result
         if donation.donation_type and donation.donation_type.repeat > 0:
-            return self.recurring_purchase(donation, form)
+            response = self.recurring_purchase(donation, form)
+            result["recurring_response"] = response
         return result
 
     def recurring_purchase(self, donation, form):

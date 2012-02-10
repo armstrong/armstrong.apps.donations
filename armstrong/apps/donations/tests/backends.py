@@ -330,6 +330,23 @@ class AuthorizeNetBackendTestCase(TestCase):
                 backend.purchase(donation, donation_form)
         fudge.verify()
 
+    def test_adds_recurring_response_to_return_on_failure(self):
+        random_return = random.randint(1000, 2000)
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+
+        recurring_purchase = (fudge.Fake().is_callable()
+                .returns(random_return))
+        onetime_purchase = (fudge.Fake().is_callable()
+                .returns({"status": True}))
+
+        backend = backends.AuthorizeNetBackend()
+        with stub_recurring_purchase(backend, recurring_purchase):
+            with stub_onetime_purchase(backend, onetime_purchase):
+                result = backend.purchase(donation, donation_form)
+        self.assertTrue("recurring_response" in result)
+        self.assertEqual(result["recurring_response"], random_return)
+
 
 from contextlib import contextmanager
 

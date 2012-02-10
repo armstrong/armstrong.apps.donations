@@ -1,4 +1,5 @@
 from billing import CreditCard
+import random
 from ._utils import TestCase
 
 from .. import forms
@@ -13,10 +14,43 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual(promo_code, donation.code)
 
+    def test_applies_promo_code_with_prefixed_form(self):
+        prefix = "random%d" % random.randint(1, 9)
+        promo_code = self.random_discount
+        data = {
+            "%s-amount" % prefix: "100",
+            "%s-name" % prefix: "Bob Example",
+            "%s-promo_code" % prefix: promo_code.code,
+        }
+        form = forms.BaseDonationForm(prefix=prefix, data=data)
+        donation = form.save()
+        self.assertEqual(promo_code, donation.code)
+
     def test_errors_if_more_than_two_digits_are_provided(self):
         form = forms.BaseDonationForm(data={"amount": "100.123"})
         self.assertFalse(form.is_valid(donation_only=True))
         self.assertTrue("amount" in form.errors)
+
+    def test_donation_type_is_used_if_present(self):
+        random_type = self.random_type
+        form = forms.BaseDonationForm(data={
+            "amount": "100",
+            "name": "Bob Example",
+            "donation_type": random_type.name,
+        })
+        donation = form.save()
+        self.assertEqual(random_type, donation.donation_type)
+
+    def test_donation_type_works_with_prefixed_forms(self):
+        random_type = self.random_type
+        prefix = "random%d" % random.randint(1, 9)
+        form = forms.BaseDonationForm(prefix=prefix, data={
+            "%s-amount" % prefix: "100",
+            "%s-name" % prefix: "Bob Example",
+            "%s-donation_type" % prefix: random_type.name,
+        })
+        donation = form.save()
+        self.assertEqual(random_type, donation.donation_type)
 
 
 class CreditCardDonationFormTestCase(TestCase):

@@ -1,4 +1,5 @@
-from authorize import aim
+from authorize import aim, arb
+import datetime
 from django.conf import settings
 import fudge
 import os
@@ -26,6 +27,12 @@ class AuthorizeNetBackendTestCase(TestCase):
         get_api = fudge.Fake().is_callable().returns(api)
         return get_api
 
+    def get_onetime_purchase_stub(self, successful=True):
+        onetime_purchase = fudge.Fake().is_callable().returns({
+                "status": successful,
+        })
+        return onetime_purchase
+
     @property
     def test_settings(self):
         fake = fudge.Fake()
@@ -41,7 +48,7 @@ class AuthorizeNetBackendTestCase(TestCase):
         donation = self.random_donation
         data = self.get_base_random_data(name=donation.donor.name,
                 amount=donation.amount)
-        donation_form = forms.CreditCardDonationForm(data)
+        donation_form = forms.AuthorizeDonationForm(data)
         donation_form.is_valid()
         return donation, donation_form
 
@@ -87,10 +94,40 @@ class AuthorizeNetBackendTestCase(TestCase):
         self.assertEqual(result, random_return)
         fudge.verify()
 
+    def test_recurring_api_class_defaults_to_authorize_api(self):
+        backend = backends.AuthorizeNetBackend()
+        self.assertEqual(backend.recurring_api_class, arb.Api)
+
+    def test_recurring_api_class_can_be_injected(self):
+        r = random.randint(10000, 20000)
+        backend = backends.AuthorizeNetBackend(recurring_api_class=r)
+        self.assertEqual(backend.recurring_api_class, r)
+
+    def test_get_recurring_api_instantiates_with_configured_settings(self):
+        random_login = "some random login %d" % random.randint(100, 200)
+        random_key = "some random key %d" % random.randint(100, 200)
+        random_return = "some random return %d" % random.randint(100, 200)
+        settings = fudge.Fake().has_attr(
+            AUTHORIZE={
+                "LOGIN": random_login,
+                "KEY": random_key,
+        })
+
+        recurring_api_class = (fudge.Fake().expects_call()
+                .with_args(random_login, random_key)
+                .returns(random_return))
+        fudge.clear_calls()
+
+        backend = backends.AuthorizeNetBackend(settings=settings,
+                    recurring_api_class=recurring_api_class)
+        result = backend.get_recurring_api()
+        self.assertEqual(result, random_return)
+        fudge.verify()
+
     def test_get_form_returns_credit_card_form(self):
         backend = backends.get_backend()
         self.assertEqual(backend.get_form_class(),
-                forms.CreditCardDonationForm)
+                forms.AuthorizeDonationForm)
 
     def test_dispatches_to_authorize_to_create_transaction(self):
         donation, donation_form = self.random_donation_and_form
@@ -142,7 +179,41 @@ class AuthorizeNetBackendTestCase(TestCase):
             # This is a known issue where Authorize.net randomly returns
             # a bad response in test mode.  Yup, you read that correctly.
             # A system designed to process your money can't actually figure
-            # out how to run a test server in a reliable way.
+            # out how to run a test server in a reliable wayself.
+            self.assertEqual(result["reason"],
+                    u"(TESTMODE) The credit card number is invalid.",
+                    msg="Authorize.net really has failed us")
+
+    @unittest.skipIf(os.environ.get("FULL_TEST_SUITE", False) != "1",
+            "Only run when FULL_TEST_SUITE env is set")
+    def test_can_communicate_with_real_authorize_backend_for_recurring(self):
+        onetime_purchase = fudge.Fake().is_callable().returns({"status": True})
+
+        class TestableApi(arb.Api):
+            def __init__(self, *args, **kwargs):
+                kwargs["is_test"] = True
+                super(TestableApi, self).__init__(*args, **kwargs)
+
+            def create_subscription(self, **kwargs):
+                kwargs["test_request"] = u"TRUE"
+                return super(TestableApi, self).create_subscription(**kwargs)
+
+        donation, donation_form = self.random_donation_and_form
+        donation_form.data["card_number"] = u"4222222222222"  # Set to test CC
+        donation.donation_type = self.random_monthly_type
+        donation.amount = 1
+        backend = backends.AuthorizeNetBackend(recurring_api_class=TestableApi,
+                settings=self.test_settings)
+        with fudge.patched_context(backend, "onetime_purchase",
+                onetime_purchase):
+            result = backend.purchase(donation, donation_form)
+        try:
+            self.assertTrue(result["status"])
+        except AssertionError:
+            # This is a known issue where Authorize.net randomly returns
+            # a bad response in test mode.  Yup, you read that correctly.
+            # A system designed to process your money can't actually figure
+            # out how to run a test server in a reliable wayself.
             self.assertEqual(result["reason"],
                     u"(TESTMODE) The credit card number is invalid.",
                     msg="Authorize.net really has failed us")
@@ -157,10 +228,10 @@ class AuthorizeNetBackendTestCase(TestCase):
         self.assertTrue(donation.processed)
 
     def test_donation_processed_is_false_if_not_successfully_charged(self):
+        stub = self.get_onetime_purchase_stub(successful=False)
         donation, donation_form = self.random_donation_and_form
-        gateway_stub = self.get_gateway_stub(successful=False)
-        with fudge.patched_context(backends, "get_gateway", gateway_stub):
-            backend = backends.AuthorizeNetBackend()
+        backend = backends.AuthorizeNetBackend()
+        with stub_onetime_purchase(backend, stub):
             backend.purchase(donation, donation_form)
 
         self.assertFalse(donation.processed)
@@ -203,3 +274,98 @@ class AuthorizeNetBackendTestCase(TestCase):
             result = backend.purchase(donation, donation_form)
         self.assertTrue("response" in result, msg="sanity check")
         self.assertEqual(result["response"], random_response)
+
+    def test_calls_to_recurring_donation_if_donation_is_recurring(self):
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+        today = datetime.date.today()
+        start_date = u"%s" % ((today + datetime.timedelta(days=30))
+                .strftime("%Y-%m-%d"))
+
+        recurring_api = fudge.Fake()
+        expiration_date = u"%(expiration_year)s-%(expiration_month)s" % (
+                donation_form.cleaned_data)
+        recurring_api.expects("create_subscription").with_args(
+                amount=donation.amount,
+                interval_unit=arb.MONTHS_INTERVAL,
+                interval_length=u"1",
+                card_number=donation_form.cleaned_data["card_number"],
+                card_code=donation_form.cleaned_data["ccv_code"],
+                expiration_date=expiration_date,
+                bill_first_name=u"%s" % donation.donor.name.split(" ")[0],
+                bill_last_name=u"%s" % donation.donor.name.split(" ", 1)[-1],
+                total_occurrences=donation.donation_type.repeat,
+                start_date=start_date,
+        ).returns({"messages": {"result_code": {"text_": u"Ok"}}})
+
+        fake = fudge.Fake().expects_call().returns(recurring_api)
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "get_api", self.get_api_stub()):
+            with fudge.patched_context(backend, "get_recurring_api", fake):
+                backend.purchase(donation, donation_form)
+        fudge.verify()
+
+    def test_calls_transaction_prior_to_subscription(self):
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+
+        recurring_purchase = (fudge.Fake().expects_call()
+                    .with_args(donation, donation_form))
+        onetime_purchase = (fudge.Fake().expects_call()
+                    .with_args(donation, donation_form)
+                    .returns({"status": True}))
+
+        backend = backends.AuthorizeNetBackend()
+        with stub_recurring_purchase(backend, recurring_purchase):
+            with stub_onetime_purchase(backend, onetime_purchase):
+                backend.purchase(donation, donation_form)
+        fudge.verify()
+
+    def test_does_not_call_recurring_purchase_on_failed_onetime_purchase(self):
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+
+        recurring_purchase = fudge.Fake()
+        onetime_purchase = (fudge.Fake().expects_call()
+                    .with_args(donation, donation_form)
+                    .returns({"status": False}))
+
+        backend = backends.AuthorizeNetBackend()
+        with stub_recurring_purchase(backend, recurring_purchase):
+            with stub_onetime_purchase(backend, onetime_purchase):
+                backend.purchase(donation, donation_form)
+        fudge.verify()
+
+    def test_adds_recurring_response_to_return_on_failure(self):
+        random_return = random.randint(1000, 2000)
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+
+        recurring_purchase = (fudge.Fake().is_callable()
+                .returns(random_return))
+        onetime_purchase = (fudge.Fake().is_callable()
+                .returns({"status": True}))
+
+        backend = backends.AuthorizeNetBackend()
+        with stub_recurring_purchase(backend, recurring_purchase):
+            with stub_onetime_purchase(backend, onetime_purchase):
+                result = backend.purchase(donation, donation_form)
+        self.assertTrue("recurring_response" in result)
+        self.assertEqual(result["recurring_response"], random_return)
+
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def stub_recurring_purchase(backend, recurring_purchase):
+    with fudge.patched_context(backend, "recurring_purchase",
+            recurring_purchase):
+        yield
+
+
+@contextmanager
+def stub_onetime_purchase(backend, onetime_purchase):
+    with fudge.patched_context(backend, "onetime_purchase",
+            onetime_purchase):
+        yield

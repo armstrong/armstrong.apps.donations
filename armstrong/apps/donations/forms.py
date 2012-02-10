@@ -58,9 +58,12 @@ class BaseDonationForm(forms.Form):
     # TODO: support commit=True?
     def save(self, **kwargs):
         donation = models.Donation(**self.get_donation_kwargs())
-        if "promo_code" in self.data:
+        if self.add_prefix("promo_code") in self.data:
             donation.code = models.PromoCode.objects.get(
-                    code=self.data["promo_code"])
+                    code=self.data[self.add_prefix("promo_code")])
+        if self.add_prefix("donation_type") in self.data:
+            donation.donation_type = models.DonationType.objects.get(
+                    name=self.data[self.add_prefix("donation_type")])
         donor = self.donor_form.save(commit=False)
         self.address_formset.save(donor)
         donor.save()
@@ -86,15 +89,28 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
-    def get_data_for_charge(self, donor):
+    def get_data_for_charge(self, donor, **kwargs):
+        raise NotImplementedError
+
+
+class AuthorizeDonationForm(CreditCardDonationForm):
+    def get_data_for_charge(self, donor, recurring=False):
         self.is_valid()
-        return {
-            "card_num": self.cleaned_data["card_number"],
+        card_number = "card_num" if not recurring else "card_number"
+        data = {
+            card_number: self.cleaned_data["card_number"],
             "card_code": self.cleaned_data["ccv_code"],
-            "exp_date": u"%02d-%04d" % (
-                    int(self.cleaned_data["expiration_month"]),
-                    int(self.cleaned_data["expiration_year"])),
         }
+
+        if recurring:
+            data["expiration_date"] = u"%04d-%02d" % (
+                    int(self.cleaned_data["expiration_year"]),
+                    int(self.cleaned_data["expiration_month"]))
+        else:
+            data["exp_date"] = u"%02d-%04d" % (
+                    int(self.cleaned_data["expiration_month"]),
+                    int(self.cleaned_data["expiration_year"]))
+        return data
 
 
 class DonorForm(forms.ModelForm):

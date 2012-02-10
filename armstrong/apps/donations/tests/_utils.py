@@ -6,6 +6,7 @@ import fudge
 import random
 
 from .. import forms
+from .. import models
 from ..models import (Donation, DonorAddress, Donor, DonationType, PromoCode)
 
 
@@ -67,6 +68,14 @@ class TestCase(ArmstrongTestCase):
         return DonationType.objects.create(
             name="Basic $20/year",
             yearly=20
+        )
+
+    @property
+    def random_monthly_type(self):
+        return DonationType.objects.create(
+            name="Basic $20/mo",
+            monthly=20,
+            repeat=9999,
         )
 
     @property

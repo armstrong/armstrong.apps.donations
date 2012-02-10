@@ -182,6 +182,9 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         data.update(address_formset)
         return data
 
+    def test_requires_confirmation_is_false(self):
+        self.assertFalse(self.get_view_object().requires_confirmation)
+
     def test_saves_donation_on_post_with_minimal_information(self):
         donor_name = self.random_donor_name
         random_amount = self.random_amount

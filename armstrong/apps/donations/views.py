@@ -25,6 +25,8 @@ class DonationFormView(TemplateView):
 
     @property
     def requires_confirmation(self):
+        if not self.confirm:
+            return False
         return False if "confirmed" in self.request.POST else True
 
     @property

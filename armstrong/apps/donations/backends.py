@@ -55,7 +55,11 @@ class AuthorizeNetBackend(object):
             "total_occurrences": donation.donation_type.repeat,
             "start_date": start_date,
         })
-        api.create_subscription(**data)
+        response = api.create_subscription(**data)
+        status = response["messages"]["result_code"]["text_"] == u"Ok"
+        return {
+            "status": status,
+        }
 
     def onetime_purchase(self, donation, form):
         api = self.get_api()

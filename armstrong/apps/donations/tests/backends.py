@@ -178,6 +178,40 @@ class AuthorizeNetBackendTestCase(TestCase):
                     u"(TESTMODE) The credit card number is invalid.",
                     msg="Authorize.net really has failed us")
 
+    @unittest.skipIf(os.environ.get("FULL_TEST_SUITE", False) != "1",
+            "Only run when FULL_TEST_SUITE env is set")
+    def test_can_communicate_with_real_authorize_backend_for_recurring(self):
+        onetime_purchase = fudge.Fake().is_callable().returns({"status": True})
+
+        class TestableApi(arb.Api):
+            def __init__(self, *args, **kwargs):
+                kwargs["is_test"] = True
+                super(TestableApi, self).__init__(*args, **kwargs)
+
+            def create_subscription(self, **kwargs):
+                kwargs["test_request"] = u"TRUE"
+                return super(TestableApi, self).create_subscription(**kwargs)
+
+        donation, donation_form = self.random_donation_and_form
+        donation_form.data["card_number"] = u"4222222222222"  # Set to test CC
+        donation.donation_type = self.random_monthly_type
+        donation.amount = 1
+        backend = backends.AuthorizeNetBackend(recurring_api_class=TestableApi,
+                settings=self.test_settings)
+        with fudge.patched_context(backend, "onetime_purchase",
+                onetime_purchase):
+            result = backend.purchase(donation, donation_form)
+        try:
+            self.assertTrue(result["status"])
+        except AssertionError:
+            # This is a known issue where Authorize.net randomly returns
+            # a bad response in test mode.  Yup, you read that correctly.
+            # A system designed to process your money can't actually figure
+            # out how to run a test server in a reliable wayself.
+            self.assertEqual(result["reason"],
+                    u"(TESTMODE) The credit card number is invalid.",
+                    msg="Authorize.net really has failed us")
+
     def test_mark_donation_as_processed(self):
         donation, donation_form = self.random_donation_and_form
         self.assertFalse(donation.processed, msg="sanity check")
@@ -256,8 +290,7 @@ class AuthorizeNetBackendTestCase(TestCase):
                 bill_last_name=u"%s" % donation.donor.name.split(" ", 1)[-1],
                 total_occurrences=donation.donation_type.repeat,
                 start_date=start_date,
-
-        )
+        ).returns({"messages": {"result_code": {"text_": u"Ok"}}})
 
         fake = fudge.Fake().expects_call().returns(recurring_api)
         backend = backends.AuthorizeNetBackend()

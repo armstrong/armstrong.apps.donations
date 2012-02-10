@@ -39,6 +39,8 @@ class AuthorizeNetBackend(object):
         if donation.donation_type and donation.donation_type.repeat > 0:
             response = self.recurring_purchase(donation, form)
             result["recurring_response"] = response
+        if result["status"]:
+            donation.processed = True
         return result
 
     def recurring_purchase(self, donation, form):
@@ -80,8 +82,6 @@ class AuthorizeNetBackend(object):
         })
         response = api.transaction(**data)
         status = response["reason_code"] == u"1"
-        if status:
-            donation.processed = True
         return {
             "status": status,
             "reason": response["reason_text"],

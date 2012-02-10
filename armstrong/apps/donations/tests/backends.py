@@ -27,6 +27,12 @@ class AuthorizeNetBackendTestCase(TestCase):
         get_api = fudge.Fake().is_callable().returns(api)
         return get_api
 
+    def get_onetime_purchase_stub(self, successful=True):
+        onetime_purchase = fudge.Fake().is_callable().returns({
+                "status": successful,
+        })
+        return onetime_purchase
+
     @property
     def test_settings(self):
         fake = fudge.Fake()
@@ -222,10 +228,10 @@ class AuthorizeNetBackendTestCase(TestCase):
         self.assertTrue(donation.processed)
 
     def test_donation_processed_is_false_if_not_successfully_charged(self):
+        stub = self.get_onetime_purchase_stub(successful=False)
         donation, donation_form = self.random_donation_and_form
-        gateway_stub = self.get_gateway_stub(successful=False)
-        with fudge.patched_context(backends, "get_gateway", gateway_stub):
-            backend = backends.AuthorizeNetBackend()
+        backend = backends.AuthorizeNetBackend()
+        with stub_onetime_purchase(backend, stub):
             backend.purchase(donation, donation_form)
 
         self.assertFalse(donation.processed)

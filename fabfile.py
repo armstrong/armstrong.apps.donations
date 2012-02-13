@@ -14,7 +14,6 @@ settings = {
         'django.contrib.sites',
         'armstrong.apps.donations',
         'south',
-        'billing',
     ),
     'SITE_ID': 1,
     'ROOT_URLCONF': 'armstrong.apps.donations.tests._urls',

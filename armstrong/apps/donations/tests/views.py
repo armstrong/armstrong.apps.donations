@@ -247,8 +247,8 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assertEqual(promo_code, donation.code)
 
         d = fudge.Fake().has_attr(amount=random_amount)
-        self.assertEqual("%d" % promo_code.calculate(d),
-                "%d" % donation.amount)
+        self.assertAlmostEqual(promo_code.calculate(d),
+                donation.amount, places=2)
 
     def test_saves_address_if_present(self):
         donor_name = self.random_donor_name

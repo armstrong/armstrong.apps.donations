@@ -97,9 +97,9 @@ class PromoCodeTestCase(TestCase):
 
         code = models.PromoCode.objects.create(code="testing",
                 amount=random_discount)
-        expected = (
+        expected = Decimal(round(
                 Decimal(random_amount)
-                * Decimal(1 - random_discount / 100.00))
+                * Decimal(1 - random_discount / 100.00), 2))
         self.assertEqual(expected, code.calculate(donation))
 
     def test_calculate_can_handle_amount_of_zero(self):
@@ -116,6 +116,17 @@ class PromoCodeTestCase(TestCase):
 
         code = models.PromoCode.objects.create(code="free", amount=100)
         self.assertEqual(0, code.calculate(donation))
+
+    def test_can_handle_rounding_issues(self):
+        donation = fudge.Fake().has_attr(amount=100)
+        code = models.PromoCode.objects.create(code="causes issues",
+                amount=13)
+        self.assertEqual(Decimal("87.0"), code.calculate(donation))
+
+    def test_can_handle_less_than_1_rounding(self):
+        donation = fudge.Fake().has_attr(amount=1)
+        code = models.PromoCode.objects.create(code="< $1", amount=10)
+        self.assertAlmostEqual(Decimal("0.90"), code.calculate(donation))
 
 
 class DonationWorkFlowTestCase(TestCase):

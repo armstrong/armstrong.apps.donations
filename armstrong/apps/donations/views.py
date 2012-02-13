@@ -15,6 +15,19 @@ class ThanksView(TemplateView):
 
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
+    confirm_template_name = "armstrong/donations/confirm.html"
+    confirm = False
+
+    def get_template_names(self):
+        if self.confirm and self.is_write_request:
+            return [self.confirm_template_name]
+        return super(DonationFormView, self).get_template_names()
+
+    @property
+    def requires_confirmation(self):
+        if not self.confirm:
+            return False
+        return False if "confirmed" in self.request.POST else True
 
     @property
     def is_write_request(self):
@@ -87,6 +100,10 @@ class DonationFormView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
     def forms_are_valid(self, donation, donation_form, **kwargs):
+        if self.requires_confirmation:
+            context = {"confirmation_required": True}
+            context.update(self.get_context_data())
+            return self.render_to_response(context)
         response = backends.get_backend().purchase(donation, donation_form)
         if not response["status"]:
             return self.purchase_failed(response)

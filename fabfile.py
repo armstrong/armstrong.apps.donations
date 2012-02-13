@@ -14,10 +14,9 @@ settings = {
         'django.contrib.sites',
         'armstrong.apps.donations',
         'south',
-        'billing',
     ),
     'SITE_ID': 1,
-    'ROOT_URLCONF': 'armstrong.apps.donations.urls',
+    'ROOT_URLCONF': 'armstrong.apps.donations.tests._urls',
     'TEMPLATE_DIRS': [
         os.path.join(os.path.dirname(__file__),
                      "armstrong", "apps", "donations", "tests", "_templates"),

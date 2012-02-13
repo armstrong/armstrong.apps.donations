@@ -1,4 +1,3 @@
-from billing import CreditCard
 import random
 from ._utils import TestCase
 

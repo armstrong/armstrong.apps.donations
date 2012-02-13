@@ -75,7 +75,8 @@ class PromoCode(models.Model):
         return u"%s (%s%%)" % (self.code, self.amount)
 
     def calculate(self, donation):
-        return donation.amount * Decimal(1 - self.amount / 100.0)
+        d = donation.amount * Decimal(1 - self.amount / 100.0)
+        return Decimal(round(d, 2))
 
 
 class Donation(models.Model):

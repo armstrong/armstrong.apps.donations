@@ -87,6 +87,14 @@ class DonationTestCase(TestCase):
         self.assertEqual(random_amount, d.amount)
         fudge.verify()
 
+    def test_has_an_attribution_field(self):
+        self.assertModelHasField(models.Donation(), "attribution",
+                models.models.CharField)
+
+    def test_has_an_anonymous_field(self):
+        self.assertModelHasField(models.Donation(), "anonymous",
+                models.models.BooleanField)
+
 
 class PromoCodeTestCase(TestCase):
     def test_calculate_returns_calculated_amount(self):

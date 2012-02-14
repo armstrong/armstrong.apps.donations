@@ -119,7 +119,15 @@ class DonorForm(forms.ModelForm):
         excludes = ("address", "mailing_address", )
 
 
-BaseDonorAddressFormset = modelformset_factory(models.DonorAddress)
+class DonorAddressForm(forms.ModelForm):
+    address = forms.CharField(widget=forms.Textarea)
+
+    class Meta:
+        model = models.DonorAddress
+
+
+BaseDonorAddressFormset = modelformset_factory(models.DonorAddress,
+        form=DonorAddressForm)
 
 
 class DonorAddressFormset(BaseDonorAddressFormset):

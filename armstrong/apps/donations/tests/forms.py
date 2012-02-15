@@ -65,3 +65,9 @@ class CreditCardDonationFormTestCase(TestCase):
         self.expiration_year = data["expiration_year"]
 
     # TODO: test get_data_for_charge directly
+
+
+class DonorAddressFormsetTestCase(TestCase):
+    def test_has_two_forms_by_default(self):
+        formset = forms.DonorAddressFormset()
+        self.assertEqual(2, len(formset.forms))

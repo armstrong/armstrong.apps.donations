@@ -127,7 +127,7 @@ class DonorAddressForm(forms.ModelForm):
 
 
 BaseDonorAddressFormset = modelformset_factory(models.DonorAddress,
-        form=DonorAddressForm)
+        form=DonorAddressForm, extra=2)
 
 
 class DonorAddressFormset(BaseDonorAddressFormset):

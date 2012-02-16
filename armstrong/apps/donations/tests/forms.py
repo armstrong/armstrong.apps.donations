@@ -51,6 +51,15 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual(random_type, donation.donation_type)
 
+    def test_billing_address_form_is_a_donoraddressform(self):
+        f = forms.BaseDonationForm()
+        self.assertIsA(f.billing_address_form, forms.DonorAddressForm)
+
+    def test_mailing_address_form_is_aa_donoraddressform(self):
+        f = forms.BaseDonationForm()
+        self.assertIsA(f.mailing_address_form, forms.DonorAddressForm)
+
+
 
 class CreditCardDonationFormTestCase(TestCase):
     def setUp(self):

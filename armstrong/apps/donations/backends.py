@@ -9,7 +9,7 @@ from . import forms
 
 class AuthorizeNetBackend(object):
     def __init__(self, api_class=None, recurring_api_class=None,
-            settings=None):
+            settings=None, testing=False):
         if api_class is None:
             api_class = aim.Api
         self.api_class = api_class
@@ -19,14 +19,16 @@ class AuthorizeNetBackend(object):
         if recurring_api_class is None:
             recurring_api_class = arb.Api
         self.recurring_api_class = recurring_api_class
+        self.testing = testing
 
     def get_api(self):
         return self.api_class(self.settings.AUTHORIZE["LOGIN"],
-                self.settings.AUTHORIZE["KEY"], delimiter=u"|")
+                self.settings.AUTHORIZE["KEY"], delimiter=u"|",
+                is_test=self.testing)
 
     def get_recurring_api(self):
         return self.recurring_api_class(self.settings.AUTHORIZE["LOGIN"],
-                self.settings.AUTHORIZE["KEY"])
+                self.settings.AUTHORIZE["KEY"], is_test=self.testing)
 
     def get_form_class(self):
         return forms.AuthorizeDonationForm

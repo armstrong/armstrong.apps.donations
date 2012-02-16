@@ -2,6 +2,7 @@ from authorize import aim, arb
 import datetime
 from django.conf import settings
 import fudge
+from fudge.inspector import arg
 import os
 import random
 import unittest
@@ -43,6 +44,46 @@ class AuthorizeNetBackendTestCase(TestCase):
         })
         return fake
 
+    def test_adds_is_test_to_recurring_api_class_api_if_in_testing_mode(self):
+        settings = self.test_settings
+        recurring_api_class = fudge.Fake().expects_call().with_args(arg.any(),
+                arg.any(), is_test=True)
+
+        backend = backends.AuthorizeNetBackend(testing=True)
+        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+            backend.get_recurring_api()
+        fudge.verify()
+
+    def test_is_test_is_false_for_recurring_api_class_api_by_default(self):
+        settings = self.test_settings
+        recurring_api_class = fudge.Fake().expects_call().with_args(arg.any(),
+                arg.any(), is_test=False)
+
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+            backend.get_recurring_api()
+        fudge.verify()
+
+    def test_adds_is_test_to_api_class_api_if_in_testing_mode(self):
+        settings = self.test_settings
+        api_class = fudge.Fake().expects_call().with_args(arg.any(), arg.any(),
+                delimiter=arg.any(), is_test=True)
+
+        backend = backends.AuthorizeNetBackend(testing=True)
+        with fudge.patched_context(backend, "api_class", api_class):
+            backend.get_api()
+        fudge.verify()
+
+    def test_is_test_is_false_for_api_class_api_by_default(self):
+        settings = self.test_settings
+        api_class = fudge.Fake().expects_call().with_args(arg.any(), arg.any(),
+                delimiter=arg.any(), is_test=False)
+
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "api_class", api_class):
+            backend.get_api()
+        fudge.verify()
+
     def test_settings_defaults_to_django_settings(self):
         backend = backends.AuthorizeNetBackend()
         self.assertEqual(backend.settings, settings)
@@ -75,7 +116,8 @@ class AuthorizeNetBackendTestCase(TestCase):
         # Note that delimiter is included here because authorize's code
         # can't even keep track of what deliminter it wants to use!
         (api_class.expects_call()
-                .with_args(random_login, random_key, delimiter=u"|")
+                .with_args(random_login, random_key, delimiter=arg.any(),
+                        is_test=arg.any())
                 .returns(random_return))
         fudge.clear_calls()
 
@@ -105,7 +147,7 @@ class AuthorizeNetBackendTestCase(TestCase):
         })
 
         recurring_api_class = (fudge.Fake().expects_call()
-                .with_args(random_login, random_key)
+                .with_args(random_login, random_key, is_test=arg.any())
                 .returns(random_return))
         fudge.clear_calls()
 

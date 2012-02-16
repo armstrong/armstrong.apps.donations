@@ -59,6 +59,8 @@ class AuthorizeNetBackend(object):
             "total_occurrences": donation.donation_type.repeat,
             "start_date": start_date,
         })
+        if self.testing:
+            data["test_request"] = u"TRUE"
         response = api.create_subscription(**data)
         status = response["messages"]["result_code"]["text_"] == u"Ok"
         return {
@@ -81,6 +83,8 @@ class AuthorizeNetBackend(object):
             "state": donor.address.state,
             "zip": donor.address.zipcode,
         })
+        if self.testing:
+            data["test_request"] = u"TRUE"
         response = api.transaction(**data)
         status = response["reason_code"] == u"1"
         return {

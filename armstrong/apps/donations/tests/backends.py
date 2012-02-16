@@ -2,6 +2,7 @@ from authorize import aim, arb
 import datetime
 from django.conf import settings
 import fudge
+from fudge.inspector import arg
 import os
 import random
 import unittest
@@ -43,6 +44,64 @@ class AuthorizeNetBackendTestCase(TestCase):
         })
         return fake
 
+    def test_testing_property_defaults_to_false(self):
+        backend = backends.AuthorizeNetBackend()
+        self.assertFalse(backend.testing)
+
+    def test_testing_uses_settings_for_default_value(self):
+        settings = self.test_settings
+        settings.ARMSTRONG_DONATIONS_TESTING = True
+        backend = backends.AuthorizeNetBackend(settings=settings)
+        self.assertTrue(backend.testing)
+
+    def test_testing_kwarg_other_than_none_are_used_in_favor_of_settings(self):
+        settings = self.test_settings
+        settings.ARMSTRONG_DONATIONS_TESTING = True
+        backend = backends.AuthorizeNetBackend(testing=False,
+                settings=settings)
+        self.assertFalse(backend.testing)
+
+
+    def test_adds_is_test_to_recurring_api_class_api_if_in_testing_mode(self):
+        settings = self.test_settings
+        recurring_api_class = fudge.Fake().expects_call().with_args(arg.any(),
+                arg.any(), is_test=True)
+
+        backend = backends.AuthorizeNetBackend(testing=True)
+        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+            backend.get_recurring_api()
+        fudge.verify()
+
+    def test_is_test_is_false_for_recurring_api_class_api_by_default(self):
+        settings = self.test_settings
+        recurring_api_class = fudge.Fake().expects_call().with_args(arg.any(),
+                arg.any(), is_test=False)
+
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+            backend.get_recurring_api()
+        fudge.verify()
+
+    def test_adds_is_test_to_api_class_api_if_in_testing_mode(self):
+        settings = self.test_settings
+        api_class = fudge.Fake().expects_call().with_args(arg.any(), arg.any(),
+                delimiter=arg.any(), is_test=True)
+
+        backend = backends.AuthorizeNetBackend(testing=True)
+        with fudge.patched_context(backend, "api_class", api_class):
+            backend.get_api()
+        fudge.verify()
+
+    def test_is_test_is_false_for_api_class_api_by_default(self):
+        settings = self.test_settings
+        api_class = fudge.Fake().expects_call().with_args(arg.any(), arg.any(),
+                delimiter=arg.any(), is_test=False)
+
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "api_class", api_class):
+            backend.get_api()
+        fudge.verify()
+
     def test_settings_defaults_to_django_settings(self):
         backend = backends.AuthorizeNetBackend()
         self.assertEqual(backend.settings, settings)
@@ -75,7 +134,8 @@ class AuthorizeNetBackendTestCase(TestCase):
         # Note that delimiter is included here because authorize's code
         # can't even keep track of what deliminter it wants to use!
         (api_class.expects_call()
-                .with_args(random_login, random_key, delimiter=u"|")
+                .with_args(random_login, random_key, delimiter=arg.any(),
+                        is_test=arg.any())
                 .returns(random_return))
         fudge.clear_calls()
 
@@ -105,7 +165,7 @@ class AuthorizeNetBackendTestCase(TestCase):
         })
 
         recurring_api_class = (fudge.Fake().expects_call()
-                .with_args(random_login, random_key)
+                .with_args(random_login, random_key, is_test=arg.any())
                 .returns(random_return))
         fudge.clear_calls()
 
@@ -142,6 +202,33 @@ class AuthorizeNetBackendTestCase(TestCase):
         get_api = fudge.Fake().expects_call().returns(api)
 
         backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "get_api", get_api):
+            backend.purchase(donation, donation_form)
+        fudge.verify()
+
+    def test_adds_test_request_to_kwargs_if_in_testing_mode(self):
+        donation, donation_form = self.random_donation_and_form
+
+        api = fudge.Fake("api")
+        api.expects("transaction").with_args(
+                amount=donation.amount,
+                card_num=donation_form.cleaned_data["card_number"],
+                card_code=donation_form.cleaned_data["ccv_code"],
+                exp_date=u"%02d-%04d" % (
+                        int(donation_form.cleaned_data["expiration_month"]),
+                        int(donation_form.cleaned_data["expiration_year"])),
+                description=u"Donation: $%d" % donation.amount,
+                first_name=unicode(donation.donor.name.split(" ")[0]),
+                last_name=unicode(donation.donor.name.split(" ", 1)[-1]),
+                address=donation.donor.address.address,
+                city=donation.donor.address.city,
+                state=donation.donor.address.state,
+                zip=donation.donor.address.zipcode,
+                test_request=u"TRUE",
+        ).returns({"reason_code": u"1", "reason_text": u"Some random Reason"})
+        get_api = fudge.Fake().expects_call().returns(api)
+
+        backend = backends.AuthorizeNetBackend(testing=True)
         with fudge.patched_context(backend, "get_api", get_api):
             backend.purchase(donation, donation_form)
         fudge.verify()
@@ -291,6 +378,37 @@ class AuthorizeNetBackendTestCase(TestCase):
 
         fake = fudge.Fake().expects_call().returns(recurring_api)
         backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "get_api", self.get_api_stub()):
+            with fudge.patched_context(backend, "get_recurring_api", fake):
+                backend.purchase(donation, donation_form)
+        fudge.verify()
+
+    def test_adds_test_request_to_recurring_if_in_testing_mode(self):
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+        today = datetime.date.today()
+        start_date = u"%s" % ((today + datetime.timedelta(days=30))
+                .strftime("%Y-%m-%d"))
+
+        recurring_api = fudge.Fake()
+        expiration_date = u"%(expiration_year)s-%(expiration_month)s" % (
+                donation_form.cleaned_data)
+        recurring_api.expects("create_subscription").with_args(
+                amount=donation.amount,
+                interval_unit=arb.MONTHS_INTERVAL,
+                interval_length=u"1",
+                card_number=donation_form.cleaned_data["card_number"],
+                card_code=donation_form.cleaned_data["ccv_code"],
+                expiration_date=expiration_date,
+                bill_first_name=u"%s" % donation.donor.name.split(" ")[0],
+                bill_last_name=u"%s" % donation.donor.name.split(" ", 1)[-1],
+                total_occurrences=donation.donation_type.repeat,
+                start_date=start_date,
+                test_request=u"TRUE",
+        ).returns({"messages": {"result_code": {"text_": u"Ok"}}})
+
+        fake = fudge.Fake().expects_call().returns(recurring_api)
+        backend = backends.AuthorizeNetBackend(testing=True)
         with fudge.patched_context(backend, "get_api", self.get_api_stub()):
             with fudge.patched_context(backend, "get_recurring_api", fake):
                 backend.purchase(donation, donation_form)

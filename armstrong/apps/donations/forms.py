@@ -28,6 +28,14 @@ class BaseDonationForm(forms.Form):
         self.address_formset = self.get_address_formset(*args, **kwargs)
         super(BaseDonationForm, self).__init__(*args, **kwargs)
 
+    @property
+    def billing_address_form(self):
+        return self.address_formset.forms[0]
+
+    @property
+    def mailing_address_form(self):
+        return self.address_formset.forms[1]
+
     def get_donor_form(self, *args, **kwargs):
         return DonorForm(*args, **kwargs)
 
@@ -127,7 +135,7 @@ class DonorAddressForm(forms.ModelForm):
 
 
 BaseDonorAddressFormset = modelformset_factory(models.DonorAddress,
-        form=DonorAddressForm)
+        form=DonorAddressForm, extra=2)
 
 
 class DonorAddressFormset(BaseDonorAddressFormset):

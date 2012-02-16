@@ -44,6 +44,24 @@ class AuthorizeNetBackendTestCase(TestCase):
         })
         return fake
 
+    def test_testing_property_defaults_to_false(self):
+        backend = backends.AuthorizeNetBackend()
+        self.assertFalse(backend.testing)
+
+    def test_testing_uses_settings_for_default_value(self):
+        settings = self.test_settings
+        settings.ARMSTRONG_DONATIONS_TESTING = True
+        backend = backends.AuthorizeNetBackend(settings=settings)
+        self.assertTrue(backend.testing)
+
+    def test_testing_kwarg_other_than_none_are_used_in_favor_of_settings(self):
+        settings = self.test_settings
+        settings.ARMSTRONG_DONATIONS_TESTING = True
+        backend = backends.AuthorizeNetBackend(testing=False,
+                settings=settings)
+        self.assertFalse(backend.testing)
+
+
     def test_adds_is_test_to_recurring_api_class_api_if_in_testing_mode(self):
         settings = self.test_settings
         recurring_api_class = fudge.Fake().expects_call().with_args(arg.any(),

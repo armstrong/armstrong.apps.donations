@@ -9,7 +9,7 @@ from . import forms
 
 class AuthorizeNetBackend(object):
     def __init__(self, api_class=None, recurring_api_class=None,
-            settings=None, testing=False):
+            settings=None, testing=None):
         if api_class is None:
             api_class = aim.Api
         self.api_class = api_class
@@ -19,6 +19,8 @@ class AuthorizeNetBackend(object):
         if recurring_api_class is None:
             recurring_api_class = arb.Api
         self.recurring_api_class = recurring_api_class
+        if testing is None:
+            testing = getattr(self.settings, "ARMSTRONG_DONATIONS_TESTING", False)
         self.testing = testing
 
     def get_api(self):

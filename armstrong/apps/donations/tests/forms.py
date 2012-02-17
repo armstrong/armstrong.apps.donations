@@ -2,6 +2,7 @@ import fudge
 import random
 from ._utils import TestCase
 
+from .. import constants
 from .. import forms
 
 
@@ -59,6 +60,35 @@ class BaseDonationFormTestCase(TestCase):
     def test_mailing_address_form_is_aa_donoraddressform(self):
         f = forms.BaseDonationForm()
         self.assertIsA(f.mailing_address_form, forms.DonorAddressForm)
+
+    def test_is_valid_uses_mailing_address_form_by_default(self):
+        is_valid_true = fudge.Fake().provides("is_valid").returns(True)
+        is_valid_false = fudge.Fake().provides("is_valid").returns(False)
+        form = forms.BaseDonationForm(data={
+                "name": "Foo",
+                "amount": "10.00",
+        })
+        attrs = ["billing_address_form", "donor_form", "mailing_address_form"]
+        for attr in attrs:
+            setattr(form, attr, is_valid_true)
+        self.assertTrue(form.is_valid())
+
+        form.mailing_address_form = is_valid_false
+        self.assertFalse(form.is_valid())
+
+    def test_is_valid_ignores_mailing_if_same_checked(self):
+        is_valid_true = fudge.Fake().provides("is_valid").returns(True)
+        is_valid_false = fudge.Fake().provides("is_valid").returns(False)
+        form = forms.BaseDonationForm(data={
+                "name": "Foo",
+                "amount": "10.00",
+                constants.MAILING_SAME_AS_BILLING: u"1",
+        })
+        attrs = ["billing_address_form", "donor_form"]
+        for attr in attrs:
+            setattr(form, attr, is_valid_true)
+        form.mailing_address_form = is_valid_false
+        self.assertFalse(form.is_valid())
 
 
 class CreditCardDonationFormTestCase(TestCase):

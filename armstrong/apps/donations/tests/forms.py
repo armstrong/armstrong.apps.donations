@@ -1,3 +1,4 @@
+import fudge
 import random
 from ._utils import TestCase
 
@@ -58,7 +59,6 @@ class BaseDonationFormTestCase(TestCase):
     def test_mailing_address_form_is_aa_donoraddressform(self):
         f = forms.BaseDonationForm()
         self.assertIsA(f.mailing_address_form, forms.DonorAddressForm)
-
 
 
 class CreditCardDonationFormTestCase(TestCase):

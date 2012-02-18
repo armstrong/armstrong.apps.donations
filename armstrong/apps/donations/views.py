@@ -80,7 +80,6 @@ class DonationFormView(TemplateView):
             "form_action_url": self.form_action_url,
             "donor_form": donation_form.donor_form,
             "donation_form": donation_form,
-            "address_formset": donation_form.address_formset,
         }
         context.update(kwargs)
         return context

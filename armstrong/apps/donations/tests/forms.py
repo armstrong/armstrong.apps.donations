@@ -28,6 +28,13 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual(promo_code, donation.code)
 
+    def test_can_save_with_an_empty_promo_code(self):
+        data = self.get_base_random_data()
+        data["promo_code"] = ""
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual(None, donation.code)
+
     def test_errors_if_more_than_two_digits_are_provided(self):
         form = forms.BaseDonationForm(data={"amount": "100.123"})
         self.assertFalse(form.is_valid(donation_only=True))

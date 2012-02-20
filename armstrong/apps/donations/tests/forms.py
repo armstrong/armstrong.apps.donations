@@ -115,6 +115,29 @@ class BaseDonationFormTestCase(TestCase):
         self.assertEqual(address, donor.address)
         self.assertEqual(mailing_address, donor.mailing_address)
 
+    def test_is_valid_is_true_if_donation_type_provided_and_no_amount(self):
+        donation_type = self.random_type
+        donor_name = self.random_donor_name
+        address_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(name=donor_name,
+                donation_type=donation_type.name)
+        data.update(self.prefix_data(address_kwargs, prefix="billing"))
+        del data["amount"]
+
+        form = forms.BaseDonationForm(data=data)
+        self.assertTrue(form.is_valid())
+
+    def test_is_valid_returns_false_with_invalid_donation_type(self):
+        donor_name = self.random_donor_name
+        address_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(name=donor_name,
+                donation_type="unknown and unknowable")
+        data.update(self.prefix_data(address_kwargs, prefix="billing"))
+        del data["amount"]
+
+        form = forms.BaseDonationForm(data=data)
+        self.assertFalse(form.is_valid())
+
 
 class CreditCardDonationFormTestCase(TestCase):
     def setUp(self):

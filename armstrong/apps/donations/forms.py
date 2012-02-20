@@ -61,6 +61,16 @@ class BaseDonationForm(forms.Form):
 
     def is_valid(self, donation_only=False):
         donation_is_valid = super(BaseDonationForm, self).is_valid()
+        if not donation_is_valid:
+            donation_type_field = self.add_prefix("donation_type")
+            if donation_type_field in self.data:
+                donation_type_name = self.data[self.add_prefix("donation_type")]
+                try:
+                    models.DonationType.objects.get(name=donation_type_name)
+                    donation_is_valid = True
+                except models.DonationType.DoesNotExist:
+                    donation_is_valid = False
+
         if donation_only:
             return donation_is_valid
         mailing_address_validity = self.billing_address_form.is_valid() \

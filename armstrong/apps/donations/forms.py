@@ -22,29 +22,35 @@ class BaseDonationForm(forms.Form):
     anonymous = forms.BooleanField(required=False,
             label=text.get("donation.label.anonymous"))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data=None, prefix=None, *args, **kwargs):
         # TODO: provide custom prefixes to each sub-form
-        self.donor_form = self.get_donor_form(*args, **kwargs)
-        self.address_formset = self.get_address_formset(*args, **kwargs)
-        super(BaseDonationForm, self).__init__(*args, **kwargs)
+        self.mailing_same_as_billing = False
+        # TODO: make this work with prefixes
+        if (data and MAILING_SAME_AS_BILLING in data and
+                data[MAILING_SAME_AS_BILLING]):
+            self.mailing_same_as_billing = True
+        self.donor_form = self.get_donor_form(data=data, prefix=prefix,
+                *args, **kwargs)
+        billing_address_prefix = "%sbilling" % ("" if not prefix else prefix)
+        self.billing_address_form = self.get_billing_address_form(
+                data=data, prefix=billing_address_prefix, empty_permitted=True,
+                *args, **kwargs)
+        self.billing_address_form.empty_permitted = True
+        mailing_address_prefix = "%smailing" % ("" if not prefix else prefix)
+        self.mailing_address_form = self.get_mailing_address_form(
+                data=data, prefix=mailing_address_prefix, *args, **kwargs)
+        self.mailing_address_form.empty_permitted = True
+        super(BaseDonationForm, self).__init__(data=data, prefix=prefix,
+                *args, **kwargs)
 
-    @property
-    def billing_address_form(self):
-        return self.address_formset.forms[0]
+    def get_billing_address_form(self, *args, **kwargs):
+        return DonorAddressForm(*args, **kwargs)
 
-    @property
-    def mailing_address_form(self):
-        return self.address_formset.forms[1]
+    def get_mailing_address_form(self, *args, **kwargs):
+        return DonorAddressForm(*args, **kwargs)
 
     def get_donor_form(self, *args, **kwargs):
         return DonorForm(*args, **kwargs)
-
-    def get_address_formset(self, *args, **kwargs):
-        data = kwargs["data"] if "data" in kwargs else (
-                args[0] if len(args) else {})
-        if "form-TOTAL_FORMS" in data:
-            return DonorAddressFormset(*args, **kwargs)
-        return DonorAddressFormset()
 
     def get_donation_kwargs(self):
         if not self.is_valid(donation_only=True):
@@ -57,10 +63,14 @@ class BaseDonationForm(forms.Form):
         donation_is_valid = super(BaseDonationForm, self).is_valid()
         if donation_only:
             return donation_is_valid
+        mailing_address_validity = self.billing_address_form.is_valid() \
+                if self.mailing_same_as_billing \
+                else self.mailing_address_form.is_valid()
         return all([
             donation_is_valid,
             self.donor_form.is_valid(),
-            self.address_formset.is_valid(),
+            self.billing_address_form.is_valid(),
+            mailing_address_validity,
         ])
 
     # TODO: support commit=True?
@@ -73,7 +83,10 @@ class BaseDonationForm(forms.Form):
             donation.donation_type = models.DonationType.objects.get(
                     name=self.data[self.add_prefix("donation_type")])
         donor = self.donor_form.save(commit=False)
-        self.address_formset.save(donor)
+        if self.billing_address_form.is_valid():
+            donor.address = self.billing_address_form.save()
+            donor.mailing_address = self.mailing_address_form.save() if \
+                    not self.mailing_same_as_billing else donor.address
         donor.save()
         donation.donor = donor
         donation.save()
@@ -132,26 +145,3 @@ class DonorAddressForm(forms.ModelForm):
 
     class Meta:
         model = models.DonorAddress
-
-
-BaseDonorAddressFormset = modelformset_factory(models.DonorAddress,
-        form=DonorAddressForm, extra=2)
-
-
-class DonorAddressFormset(BaseDonorAddressFormset):
-    def __init__(self, data=None, **kwargs):
-        self.mailing_same_as_billing = False
-        if (data and MAILING_SAME_AS_BILLING in data
-                and data[MAILING_SAME_AS_BILLING]):
-            self.mailing_same_as_billing = True
-        super(DonorAddressFormset, self).__init__(data=data, **kwargs)
-
-    def save(self, donor, **kwargs):
-        instances = super(DonorAddressFormset, self).save(**kwargs)
-        if len(instances):
-            donor.address = instances[0]
-            if self.mailing_same_as_billing:
-                donor.mailing_address = donor.address
-            elif len(instances) > 1:
-                donor.mailing_address = instances[1]
-        return instances

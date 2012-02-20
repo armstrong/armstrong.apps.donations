@@ -101,6 +101,16 @@ class BaseDonationFormViewTestCase(TestCase):
                 self.assertTrue(field in form.errors,
                         msg="%s not in the errors" % field)
 
+    def assert_subform_has_errors(self, response, subform_name,
+            error_fields=None):
+        form = response.context["donation_form"]
+        self.assertTrue(hasattr(form, subform_name))
+        subform = getattr(form, subform_name)
+        if error_fields:
+            for field in error_fields:
+                self.assertTrue(field in subform.errors,
+                        msg="%s not in the errors" % field)
+
     def get_view_object(self):
         view = self.view_class()
         view.request = self.factory.get(self.url)
@@ -128,11 +138,6 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
     @get_response
     def test_adds_donor_form_to_context(self, response):
         self.assert_type_in_context(response, "donor_form", forms.DonorForm)
-
-    @get_response
-    def test_adds_address_formset_to_context(self, response):
-        self.assert_type_in_context(response, "address_formset",
-                forms.DonorAddressFormset)
 
     @get_response
     def test_adds_donation_formset_to_context(self, response):
@@ -210,8 +215,9 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     def random_post_data(self):
         data = self.get_base_random_data()
         address_kwargs = self.random_address_kwargs
-        address_formset = self.get_data_as_formset(address_kwargs)
-        data.update(address_formset)
+        prefixed_address_kwargs = self.prefix_data(address_kwargs,
+                prefix="billing")
+        data.update(prefixed_address_kwargs)
         return data
 
     def test_requires_confirmation_is_false(self):
@@ -239,7 +245,8 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         random_amount = self. random_amount
         data = self.get_base_random_data(name=donor_name, amount=random_amount,
                 promo_code=promo_code.code)
-        data.update(self.get_data_as_formset())
+        data.update(self.prefix_data(self.random_address_kwargs,
+                prefix="billing"))
 
         self.client.post(self.url, data)
         donor = models.Donor.objects.get(name=donor_name)
@@ -253,13 +260,12 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     def test_saves_address_if_present(self):
         donor_name = self.random_donor_name
         address_kwargs = self.random_address_kwargs
-        address_formset = self.get_data_as_formset(address_kwargs)
         data = self.get_base_random_data(name=donor_name)
-        data.update(address_formset)
+        data.update(self.prefix_data(address_kwargs, prefix="billing"))
 
         self.client.post(self.url, data)
-        address = models.DonorAddress.objects.get(**address_kwargs)
         donor = models.Donor.objects.get(name=donor_name)
+        address = models.DonorAddress.objects.get(**address_kwargs)
         self.assertEqual(address, donor.address)
         self.assertEqual(address, donor.mailing_address)
 
@@ -267,12 +273,9 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         donor_name = self.random_donor_name
         address_kwargs = self.random_address_kwargs
         mailing_address_kwargs = self.random_address_kwargs
-        address_formset = self.get_data_as_formset([
-            address_kwargs,
-            mailing_address_kwargs,
-        ])
         data = self.get_base_random_data(name=donor_name)
-        data.update(address_formset)
+        data.update(self.prefix_data(address_kwargs, prefix="billing"))
+        data.update(self.prefix_data(mailing_address_kwargs, prefix="mailing"))
         del data[constants.MAILING_SAME_AS_BILLING]
 
         self.assertEqual(0, len(models.DonorAddress.objects.all()),
@@ -288,7 +291,6 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assertEqual(address, donor.address)
         self.assertEqual(mailing_address, donor.mailing_address)
 
-    @expectedFailure
     def test_only_saves_donor_once(self):
         """
         Verify the number of queries that are run.
@@ -301,11 +303,6 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         with self.assertNumQueries(3):
             self.client.post(self.url, data)
 
-    def test_only_saves_donor_once_with_buggy_modelformset(self):
-        data = self.random_post_data
-        with self.assertNumQueries(3 + 1, msg="will fail if #17594 is merged"):
-            self.client.post(self.url, data)
-
     def test_saves_mailing_address_if_same_as_billing_is_checked(self):
         data = self.random_post_data
         data["mailing_same_as_billing"] = u"1"
@@ -315,10 +312,10 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
 
     def test_same_as_billing_overrides_second_address(self):
         data = self.random_post_data
-        data.update(self.get_data_as_formset([
-            self.random_address_kwargs,
-            self.random_address_kwargs,
-        ]))
+        data.update(self.prefix_data(self.random_address_kwargs,
+                prefix="billing"))
+        data.update(self.prefix_data(self.random_address_kwargs,
+                prefix="mailing"))
         data["mailing_same_as_billing"] = u"1"
         self.client.post(self.url, data)
         donor = models.Donor.objects.get(name=data["name"])
@@ -345,23 +342,23 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
 
     def test_displays_errors_on_address_validation_error(self):
         data = self.random_post_data
-        data["form-0-address"] = ""
+        data["billing-address"] = ""
         response = self.client.post(self.url, data)
         self.assert_template("armstrong/donations/donation.html", response)
-        self.assert_form_has_errors(response, "address_formset")
+        self.assert_subform_has_errors(response, "billing_address_form")
 
     def test_displays_errors_on_mailing_address_validation_error(self):
         data = self.random_post_data
-        address_formset = self.get_data_as_formset([
-            self.random_address_kwargs,
-            self.random_address_kwargs,
-        ])
-        data.update(address_formset)
+        data.update(self.prefix_data(self.random_address_kwargs,
+                prefix="billing"))
+        data.update(self.prefix_data(self.random_address_kwargs,
+                prefix="mailing"))
         del data["mailing_same_as_billing"]
-        data["form-1-address"] = ""
+        data["mailing-address"] = ""
         response = self.client.post(self.url, data)
+
         self.assert_template("armstrong/donations/donation.html", response)
-        self.assert_form_has_errors(response, "address_formset")
+        self.assert_subform_has_errors(response, "mailing_address_form")
 
     @failed_purchase
     def test_does_redisplays_form_on_failed_donation(self, response, **kwargs):

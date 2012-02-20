@@ -115,6 +115,15 @@ class TestCase(ArmstrongTestCase):
         data.update(kwargs)
         return data
 
+    def prefix_data(self, data, prefix=None):
+        # TODO: Seems overly verbose, probably doing something wrong
+        if not prefix:
+            return data
+        r = {}
+        for k in data:
+            r["%s-%s" % (prefix, k)] = data[k]
+        return r
+
     def get_data_as_formset(self, data=None, prefix="form", total_forms=None,
             initial_forms=u"0", max_num_forms=u""):
         if data is None:

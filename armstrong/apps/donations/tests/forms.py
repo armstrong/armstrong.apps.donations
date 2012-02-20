@@ -1,7 +1,10 @@
+import fudge
 import random
 from ._utils import TestCase
 
+from .. import constants
 from .. import forms
+from .. import models
 
 
 class BaseDonationFormTestCase(TestCase):
@@ -59,6 +62,58 @@ class BaseDonationFormTestCase(TestCase):
         f = forms.BaseDonationForm()
         self.assertIsA(f.mailing_address_form, forms.DonorAddressForm)
 
+    def test_is_valid_uses_mailing_address_form_by_default(self):
+        is_valid_true = fudge.Fake().provides("is_valid").returns(True)
+        is_valid_false = fudge.Fake().provides("is_valid").returns(False)
+        form = forms.BaseDonationForm(data={
+                "name": "Foo",
+                "amount": "10.00",
+        })
+        attrs = ["billing_address_form", "donor_form", "mailing_address_form"]
+        for attr in attrs:
+            setattr(form, attr, is_valid_true)
+        self.assertTrue(form.is_valid())
+
+        form.mailing_address_form = is_valid_false
+        self.assertFalse(form.is_valid())
+
+    def test_is_valid_ignores_mailing_if_same_checked(self):
+        is_valid_true = fudge.Fake().provides("is_valid").returns(True)
+        is_valid_false = fudge.Fake().provides("is_valid").returns(False)
+        form = forms.BaseDonationForm(data={
+                "name": "Foo",
+                "amount": "10.00",
+                constants.MAILING_SAME_AS_BILLING: u"1",
+        })
+        attrs = ["billing_address_form", "donor_form"]
+        for attr in attrs:
+            setattr(form, attr, is_valid_true)
+        form.mailing_address_form = is_valid_false
+        self.assertTrue(form.is_valid())
+
+    def test_saves_mailing_address_if_present(self):
+        donor_name = self.random_donor_name
+        address_kwargs = self.random_address_kwargs
+        mailing_address_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(name=donor_name)
+        data.update(self.prefix_data(address_kwargs, prefix="billing"))
+        data.update(self.prefix_data(mailing_address_kwargs, prefix="mailing"))
+        del data[constants.MAILING_SAME_AS_BILLING]
+
+        self.assertEqual(0, len(models.DonorAddress.objects.all()),
+            msg="sanity check")
+        form = forms.BaseDonationForm(data=data)
+        form.save()
+        self.assertEqual(2, len(models.DonorAddress.objects.all()))
+        address = models.DonorAddress.objects.get(**address_kwargs)
+        mailing_address = models.DonorAddress.objects.get(
+                **mailing_address_kwargs)
+        self.assertNotEqual(address, mailing_address)
+
+        donor = models.Donor.objects.get(name=donor_name)
+        # import ipdb; ipdb.set_trace()
+        self.assertEqual(address, donor.address)
+        self.assertEqual(mailing_address, donor.mailing_address)
 
 
 class CreditCardDonationFormTestCase(TestCase):
@@ -74,9 +129,3 @@ class CreditCardDonationFormTestCase(TestCase):
         self.expiration_year = data["expiration_year"]
 
     # TODO: test get_data_for_charge directly
-
-
-class DonorAddressFormsetTestCase(TestCase):
-    def test_has_two_forms_by_default(self):
-        formset = forms.DonorAddressFormset()
-        self.assertEqual(2, len(formset.forms))

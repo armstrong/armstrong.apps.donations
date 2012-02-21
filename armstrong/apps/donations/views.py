@@ -90,13 +90,13 @@ class DonationFormView(TemplateView):
     def post(self, request, *args, **kwargs):
         donation_form = self.get_donation_form()
         if not donation_form.is_valid():
-            return self.forms_are_invalid()
-        return self.forms_are_valid(donation_form=donation_form)
+            return self.form_is_invalid()
+        return self.form_is_valid(donation_form=donation_form)
 
-    def forms_are_invalid(self, **kwargs):
+    def form_is_invalid(self, **kwargs):
         return self.render_to_response(self.get_context_data())
 
-    def forms_are_valid(self, donation_form, **kwargs):
+    def form_is_valid(self, donation_form):
         if self.requires_confirmation:
             context = {"confirmation_required": True}
             context.update(self.get_context_data())

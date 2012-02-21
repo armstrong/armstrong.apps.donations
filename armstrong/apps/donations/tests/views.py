@@ -151,7 +151,7 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         self.assertIsA(donation_form, forms.CreditCardDonationForm)
 
 
-def forms_are_valid_response(confirmed=False):
+def form_is_valid_response(confirmed=False):
     def outer(func):
         @wraps(func)
         def inner(self, *args, **kwargs):
@@ -159,7 +159,7 @@ def forms_are_valid_response(confirmed=False):
             fake_save = fudge.Fake().is_callable().returns(donation)
             setattr(form, "save", fake_save)
             v = self.get_post_view(confirmed=confirmed)
-            response = v.forms_are_valid(form)
+            response = v.form_is_valid(form)
             func(self, response)
         return inner
     return outer
@@ -203,15 +203,15 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
         v = self.get_post_view(confirmed=True)
         self.assertFalse(v.requires_confirmation)
 
-    @forms_are_valid_response()
-    def test_forms_are_valid_re_renders_if_confirmation_is_required(self, r):
+    @form_is_valid_response()
+    def test_form_is_valid_re_renders_if_confirmation_is_required(self, r):
         self.assertIsA(r, TemplateResponse)
 
-    @forms_are_valid_response()
+    @form_is_valid_response()
     def test_contains_confirmation_required_in_context(self, r):
         self.assert_value_in_context(r, "confirmation_required", True)
 
-    @forms_are_valid_response(confirmed=True)
+    @form_is_valid_response(confirmed=True)
     def test_redirects_on_confirmed(self, r):
         self.assertIsA(r, HttpResponseRedirect)
 

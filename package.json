@@ -1,6 +1,6 @@
 {
     "name": "armstrong.apps.donations",
-    "version": "0.6.1alpha.0",
+    "version": "0.6.1",
     "description": "Provides a framework for accepting donations",
     "install_requires": [
         "authorize==0.1.0",

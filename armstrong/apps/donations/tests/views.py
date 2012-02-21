@@ -196,6 +196,11 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
         v.request = self.fake_get_request
         self.assertEqual(v.template_name, v.get_template_names()[0])
 
+    def test_uses_regular_template_on_invalid_request(self):
+        v = self.post_view
+        v.form_validation_failed = True
+        self.assertEqual(v.template_name, v.get_template_names()[0])
+
     def test_requires_confirmation_is_true_by_default_on_posts(self):
         self.assertTrue(self.post_view.requires_confirmation)
 

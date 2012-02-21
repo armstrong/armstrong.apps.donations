@@ -183,6 +183,23 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
 
     post_view = property(get_post_view)
 
+    def test_use_confirm_template_false_by_default(self):
+        v = views.DonationFormView()
+        self.assertFalse(v.use_confirm_template)
+
+    def test_use_confirm_template_true_if_confirmation_required(self):
+        v = self.post_view
+        self.assertTrue(v.use_confirm_template)
+
+    def test_use_confirm_template_false_if_confirmed(self):
+        v = self.get_post_view(confirmed=True)
+        self.assertFalse(v.use_confirm_template)
+
+    def test_use_confirm_template_false_if_confirmation_failed(self):
+        v = self.post_view
+        v.form_validation_failed = True
+        self.assertFalse(v.use_confirm_template)
+
     def test_swaps_templates_on_confirmation(self):
         v = self.post_view
         self.assertEqual(v.confirm_template_name, v.get_template_names()[0])
@@ -195,6 +212,16 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
         v = views.DonationFormView(confirm=True)
         v.request = self.fake_get_request
         self.assertEqual(v.template_name, v.get_template_names()[0])
+
+    def test_uses_regular_template_on_invalid_request(self):
+        v = self.post_view
+        v.form_validation_failed = True
+        self.assertEqual(v.template_name, v.get_template_names()[0])
+
+    def test_form_is_invalid_uses_regular_template(self):
+        v = self.post_view
+        response = v.form_is_invalid()
+        self.assertEqual(v.template_name, response.template_name[0])
 
     def test_requires_confirmation_is_true_by_default_on_posts(self):
         self.assertTrue(self.post_view.requires_confirmation)

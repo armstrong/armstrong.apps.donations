@@ -16,11 +16,17 @@ class ThanksView(TemplateView):
 class DonationFormView(TemplateView):
     template_name = "armstrong/donations/donation.html"
     confirm_template_name = "armstrong/donations/confirm.html"
+    form_validation_failed = False
     confirm = False
 
+    @property
+    def use_confirm_template(self):
+        return not self.form_validation_failed \
+                and self.requires_confirmation and self.is_write_request
+
     def get_template_names(self):
-        if self.requires_confirmation and self.is_write_request:
-            return [self.confirm_template_name]
+        if self.use_confirm_template:
+            return [self.confirm_template_name, ]
         return super(DonationFormView, self).get_template_names()
 
     @property
@@ -94,6 +100,7 @@ class DonationFormView(TemplateView):
         return self.form_is_valid(donation_form=donation_form)
 
     def form_is_invalid(self):
+        self.form_validation_failed = True
         return self.render_to_response(self.get_context_data())
 
     def form_is_valid(self, donation_form):

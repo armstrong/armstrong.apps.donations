@@ -19,7 +19,7 @@ class DonationFormView(TemplateView):
     confirm = False
 
     def get_template_names(self):
-        if self.confirm and self.is_write_request:
+        if self.requires_confirmation and self.is_write_request:
             return [self.confirm_template_name]
         return super(DonationFormView, self).get_template_names()
 

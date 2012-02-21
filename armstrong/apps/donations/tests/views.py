@@ -183,6 +183,23 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
 
     post_view = property(get_post_view)
 
+    def test_use_confirm_template_false_by_default(self):
+        v = views.DonationFormView()
+        self.assertFalse(v.use_confirm_template)
+
+    def test_use_confirm_template_true_if_confirmation_required(self):
+        v = self.post_view
+        self.assertTrue(v.use_confirm_template)
+
+    def test_use_confirm_template_false_if_confirmed(self):
+        v = self.get_post_view(confirmed=True)
+        self.assertFalse(v.use_confirm_template)
+
+    def test_use_confirm_template_false_if_confirmation_failed(self):
+        v = self.post_view
+        v.form_validation_failed = True
+        self.assertFalse(v.use_confirm_template)
+
     def test_swaps_templates_on_confirmation(self):
         v = self.post_view
         self.assertEqual(v.confirm_template_name, v.get_template_names()[0])

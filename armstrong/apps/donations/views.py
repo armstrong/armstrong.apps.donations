@@ -19,10 +19,14 @@ class DonationFormView(TemplateView):
     form_validation_failed = False
     confirm = False
 
+    @property
+    def use_confirm_template(self):
+        return not self.form_validation_failed \
+                and self.requires_confirmation and self.is_write_request
+
     def get_template_names(self):
-        if not self.form_validation_failed \
-                and self.requires_confirmation and self.is_write_request:
-            return [self.confirm_template_name]
+        if self.use_confirm_template:
+            return [self.confirm_template_name, ]
         return super(DonationFormView, self).get_template_names()
 
     @property

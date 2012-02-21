@@ -156,8 +156,10 @@ def forms_are_valid_response(confirmed=False):
         @wraps(func)
         def inner(self, *args, **kwargs):
             donation, form = self.random_donation_and_form
+            fake_save = fudge.Fake().is_callable().returns(donation)
+            setattr(form, "save", fake_save)
             v = self.get_post_view(confirmed=confirmed)
-            response = v.forms_are_valid(donation, form)
+            response = v.forms_are_valid(form)
             func(self, response)
         return inner
     return outer

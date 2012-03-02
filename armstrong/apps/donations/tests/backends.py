@@ -11,6 +11,7 @@ from ._utils import TestCase
 
 from .. import backends
 from .. import forms
+from .. import signals
 
 
 class AuthorizeNetBackendTestCase(TestCase):
@@ -458,6 +459,25 @@ class AuthorizeNetBackendTestCase(TestCase):
         self.assertTrue("recurring_response" in result)
         self.assertEqual(result["recurring_response"], random_return)
 
+    def test_fires_donation_complete_on_successful_charge(self):
+        donation, form = self.random_donation_and_form
+        result = {
+            "status": True,
+            "random": random.randint(100, 200),
+        }
+        onetime_purchase = (fudge.Fake().is_callable()
+                .returns(result))
+
+        backend = backends.AuthorizeNetBackend()
+        signal = (fudge.Fake().expects_call()
+                .with_args(sender=backend, donation=donation,
+                        signal=arg.any(), form=form, result=result))
+        signals.successful_purchase.connect(signal)
+        with stub_onetime_purchase(backend, onetime_purchase):
+            backend.purchase(donation, form)
+
+        fudge.verify()
+        signals.successful_purchase.disconnect(signal)
 
 from contextlib import contextmanager
 

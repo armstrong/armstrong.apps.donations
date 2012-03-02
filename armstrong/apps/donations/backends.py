@@ -5,6 +5,7 @@ import datetime
 from django.conf import settings as django_settings
 
 from . import forms
+from . import signals
 
 
 class AuthorizeNetBackend(object):
@@ -44,6 +45,8 @@ class AuthorizeNetBackend(object):
             result["recurring_response"] = response
         if result["status"]:
             donation.processed = True
+            signals.successful_purchase.send(sender=self, donation=donation,
+                    form=form, result=result)
         return result
 
     def recurring_purchase(self, donation, form):

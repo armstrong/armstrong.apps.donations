@@ -1,6 +1,6 @@
 from authorize import aim, arb
 import datetime
-from django.conf import settings
+from django.conf import settings as django_settings
 import fudge
 from fudge.inspector import arg
 import os
@@ -61,9 +61,7 @@ class AuthorizeNetBackendTestCase(TestCase):
                 settings=settings)
         self.assertFalse(backend.testing)
 
-
     def test_adds_is_test_to_recurring_api_class_api_if_in_testing_mode(self):
-        settings = self.test_settings
         recurring_api_class = fudge.Fake().expects_call().with_args(arg.any(),
                 arg.any(), is_test=True)
 
@@ -73,7 +71,6 @@ class AuthorizeNetBackendTestCase(TestCase):
         fudge.verify()
 
     def test_is_test_is_false_for_recurring_api_class_api_by_default(self):
-        settings = self.test_settings
         recurring_api_class = fudge.Fake().expects_call().with_args(arg.any(),
                 arg.any(), is_test=False)
 
@@ -83,7 +80,6 @@ class AuthorizeNetBackendTestCase(TestCase):
         fudge.verify()
 
     def test_adds_is_test_to_api_class_api_if_in_testing_mode(self):
-        settings = self.test_settings
         api_class = fudge.Fake().expects_call().with_args(arg.any(), arg.any(),
                 delimiter=arg.any(), is_test=True)
 
@@ -104,7 +100,7 @@ class AuthorizeNetBackendTestCase(TestCase):
 
     def test_settings_defaults_to_django_settings(self):
         backend = backends.AuthorizeNetBackend()
-        self.assertEqual(backend.settings, settings)
+        self.assertEqual(backend.settings, django_settings)
 
     def test_settings_can_be_injected(self):
         r = random.randint(10000, 20000)

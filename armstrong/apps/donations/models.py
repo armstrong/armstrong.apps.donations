@@ -35,6 +35,10 @@ class DonationType(models.Model):
     name = models.CharField(
         max_length=100, help_text=_(u"Name of Donation Type")
     )
+
+
+class DonationTypeOption(models.Model):
+    donation_type = models.ForeignKey(DonationType, related_name="options")
     amount = models.PositiveIntegerField(help_text=_(u"Amount to donate"))
     length = models.PositiveIntegerField(default=1,
         help_text=_(u"Number of months per repeat (1 is one month, 12 is one year)")
@@ -43,6 +47,10 @@ class DonationType(models.Model):
         default=0, null=True, blank=True,
         help_text=_(u"Number of times (if any) this donation will repeat")
     )
+
+    @property
+    def name(self):
+        return self.donation_type.name
 
     @property
     def is_repeating(self):
@@ -65,7 +73,7 @@ class PromoCode(models.Model):
 
 class Donation(models.Model):
     donor = models.ForeignKey(Donor)
-    donation_type = models.ForeignKey(DonationType, null=True, blank=True)
+    donation_type = models.ForeignKey(DonationTypeOption, null=True, blank=True)
     code = models.ForeignKey(PromoCode, null=True, blank=True)
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)

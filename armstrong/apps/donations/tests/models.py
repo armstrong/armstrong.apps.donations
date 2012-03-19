@@ -24,17 +24,21 @@ class DonorTestCase(TestCase):
         self.assertEqual(name, d.name)
 
 
-class DonationTypeTestCase(TestCase):
+class DonationTypeOptionTestCase(TestCase):
     def test_repeat_default_to_zero(self):
-        dt = DonationType.objects.create(name="Simple", amount=100)
+        dt = models.DonationTypeOption.objects.create(name="Simple",
+                amount=100, donation_type=self.get_base_donation_type())
         self.assertEqual(0, dt.repeat)
 
     def test_is_repeating_is_false_by_default(self):
-        dt = DonationType.objects.create(name="Simple", amount=100)
+        dt = models.DonationTypeOption.objects.create(name="Simple",
+                amount=100, donation_type=self.get_base_donation_type())
         self.assertFalse(dt.is_repeating)
 
     def test_is_repeating_is_true_if_repeats_one_or_more_times(self):
-        dt = DonationType.objects.create(name="Simple", amount=100, repeat=1)
+        dt = models.DonationTypeOption.objects.create(name="Simple",
+                amount=100, repeat=1,
+                donation_type=self.get_base_donation_type())
         self.assertTrue(dt.is_repeating)
 
 
@@ -44,13 +48,15 @@ class DonationTestCase(TestCase):
         self.assertFalse(d.is_repeating)
 
     def test_is_repeating_is_true_if_donation_type_repeats(self):
-        dt = DonationType.objects.create(name="Simple", amount=100, repeat=1)
+        dt = models.DonationTypeOption(amount=100, repeat=1,
+                donation_type=DonationType.objects.create(name="Simple"))
         d = Donation()
         d.donation_type = dt
         self.assertTrue(d.is_repeating)
 
     def test_is_repeating_is_false_if_donation_type_does_not_repeat(self):
-        dt = DonationType.objects.create(name="Simple", amount=100)
+        dt = models.DonationTypeOption(amount=100,
+                donation_type=DonationType.objects.create(name="Simple"))
         d = Donation()
         d.donation_type = dt
         self.assertFalse(d.is_repeating)
@@ -68,7 +74,9 @@ class DonationTestCase(TestCase):
         fudge.verify()
 
     def test_uses_donation_type_if_no_amount_provided(self):
-        donation_type = DonationType.objects.create(name="$10", amount="10")
+        dt = DonationType.objects.create(name="$10")
+        donation_type = models.DonationTypeOption.objects.create(
+                donation_type=dt, amount="10")
         d = Donation()
         d.donation_type = donation_type
         d.donor = self.random_donor

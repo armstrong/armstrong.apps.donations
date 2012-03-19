@@ -63,29 +63,32 @@ class TestCase(ArmstrongTestCase):
             donor=self.random_donor,
         )
 
-    @property
-    def random_type(self):
-        return DonationType.objects.create(
-            name="Basic $20",
+    def get_random_base_option(self, donation_type):
+        return models.DonationTypeOption.objects.create(
+            donation_type=donation_type,
             amount=20,
         )
+
+    def get_base_donation_type(self):
+        return models.DonationType.objects.create(name="Basic")
+
+    @property
+    def random_type(self):
+        dt = self.get_base_donation_type()
+        option = self.get_random_base_option(dt)
+        return option
 
     @property
     def random_yearly_type(self):
-        return DonationType.objects.create(
-            name="Basic $20/year",
-            amount=20,
-            length=12,
-            repeat=9999,
-        )
+        dt = self.get_base_donation_type()
+        return models.DonationTypeOption.objects.create(
+            donation_type=dt, amount=20, length=12, repeat=9999)
 
     @property
     def random_monthly_type(self):
-        return DonationType.objects.create(
-            name="Basic $20/mo",
-            amount=20,
-            repeat=9999,
-        )
+        dt = self.get_base_donation_type()
+        return models.DonationTypeOption.objects.create(
+            donation_type=dt, amount=20, repeat=9999)
 
     @property
     def random_discount(self):

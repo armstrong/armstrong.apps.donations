@@ -66,8 +66,17 @@ class TestCase(ArmstrongTestCase):
     @property
     def random_type(self):
         return DonationType.objects.create(
+            name="Basic $20",
+            amount=20,
+        )
+
+    @property
+    def random_yearly_type(self):
+        return DonationType.objects.create(
             name="Basic $20/year",
-            amount=20
+            amount=20,
+            length=12,
+            repeat=9999,
         )
 
     @property

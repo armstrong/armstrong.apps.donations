@@ -36,6 +36,9 @@ class DonationType(models.Model):
         max_length=100, help_text=_(u"Name of Donation Type")
     )
     amount = models.PositiveIntegerField(help_text=_(u"Amount to donate"))
+    length = models.PositiveIntegerField(default=1,
+        help_text=_(u"Number of months per repeat (1 is one month, 12 is one year)")
+    )
     repeat = models.PositiveIntegerField(
         default=0, null=True, blank=True,
         help_text=_(u"Number of times (if any) this donation will repeat")

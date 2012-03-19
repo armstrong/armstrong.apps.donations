@@ -67,14 +67,14 @@ class TestCase(ArmstrongTestCase):
     def random_type(self):
         return DonationType.objects.create(
             name="Basic $20/year",
-            yearly=20
+            amount=20
         )
 
     @property
     def random_monthly_type(self):
         return DonationType.objects.create(
             name="Basic $20/mo",
-            monthly=20,
+            amount=20,
             repeat=9999,
         )
 

@@ -25,26 +25,9 @@ class DonorTestCase(TestCase):
 
 
 class DonationTypeTestCase(TestCase):
-    def test_can_not_have_both_monthly_and_yearly(self):
-        with self.assertRaises(ValidationError) as e:
-            d = DonationType.objects.create(name="Will Fail",
-                    yearly=100, monthly=10)
-            # Calling clean() here the way a ModelForm would
-            d.clean()
-        self.assertEqual(
-            "You cannot use both yearly and monthly",
-            e.exception.messages[0]
-        )
-
-    def test_amount_uses_yearly_if_available(self):
-        r = random.randint(1, 100)
-        a = DonationType.objects.create(name="Basic", yearly=r)
-        self.assertEqual(r, a.amount)
-
-    def test_amount_uses_monthly_if_available(self):
-        r = random.randint(1, 100)
-        a = DonationType.objects.create(name="Basic", monthly=r)
-        self.assertEqual(r, a.amount)
+    def test_repeat_default_to_zero(self):
+        dt = DonationType.objects.create(name="Simple", amount=100)
+        self.assertEqual(0, dt.repeat)
 
 
 class DonationTestCase(TestCase):
@@ -61,7 +44,7 @@ class DonationTestCase(TestCase):
         fudge.verify()
 
     def test_uses_donation_type_if_no_amount_provided(self):
-        donation_type = DonationType.objects.create(name="$10", monthly="10")
+        donation_type = DonationType.objects.create(name="$10", amount="10")
         d = Donation()
         d.donation_type = donation_type
         d.donor = self.random_donor

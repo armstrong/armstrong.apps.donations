@@ -35,34 +35,11 @@ class DonationType(models.Model):
     name = models.CharField(
         max_length=100, help_text=_(u"Name of Donation Type")
     )
-    yearly = models.PositiveIntegerField(
-        default=None, null=True, blank=True,
-        help_text=_(u"Amount to donate for the year")
-    )
-    monthly = models.PositiveIntegerField(
-        default=None, null=True, blank=True,
-        help_text=_(u"Amount to donate for the month")
-    )
+    amount = models.PositiveIntegerField(help_text=_(u"Amount to donate"))
     repeat = models.PositiveIntegerField(
-        default=None, null=True, blank=True,
+        default=0, null=True, blank=True,
         help_text=_(u"Number of times (if any) this donation will repeat")
     )
-
-    @property
-    def amount(self):
-        return self.yearly if self.yearly else self.monthly
-
-    def clean(self):
-        """
-        Validate that this model is in the state you'd except
-
-        This is called by the various ModelForms that interact with it.
-        Keep in mind that this is not called when you explicitly create
-        a model via `objects.create()`.
-        """
-        from django.core.exceptions import ValidationError
-        if self.yearly and self.monthly:
-            raise ValidationError(_(u"You cannot use both yearly and monthly"))
 
 
 class PromoCode(models.Model):

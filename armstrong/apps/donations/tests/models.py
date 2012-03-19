@@ -39,6 +39,22 @@ class DonationTypeTestCase(TestCase):
 
 
 class DonationTestCase(TestCase):
+    def test_is_repeating_is_false_by_default(self):
+        d = Donation()
+        self.assertFalse(d.is_repeating)
+
+    def test_is_repeating_is_true_if_donation_type_repeats(self):
+        dt = DonationType.objects.create(name="Simple", amount=100, repeat=1)
+        d = Donation()
+        d.donation_type = dt
+        self.assertTrue(d.is_repeating)
+
+    def test_is_repeating_is_false_if_donation_type_does_not_repeat(self):
+        dt = DonationType.objects.create(name="Simple", amount=100)
+        d = Donation()
+        d.donation_type = dt
+        self.assertFalse(d.is_repeating)
+
     def test_dispatches_to_configured_backend(self):
         m = Donation()
         random_card = "some-random-card-%d" % random.randint(1000, 2000)

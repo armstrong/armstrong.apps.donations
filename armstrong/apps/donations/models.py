@@ -80,3 +80,7 @@ class Donation(models.Model):
     def purchase(self, form):
         from . import backends
         return backends.get_backend().purchase(self, form)
+
+    @property
+    def is_repeating(self):
+        return self.donation_type and self.donation_type.is_repeating or False

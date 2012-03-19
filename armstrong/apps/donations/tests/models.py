@@ -29,6 +29,14 @@ class DonationTypeTestCase(TestCase):
         dt = DonationType.objects.create(name="Simple", amount=100)
         self.assertEqual(0, dt.repeat)
 
+    def test_is_repeating_is_false_by_default(self):
+        dt = DonationType.objects.create(name="Simple", amount=100)
+        self.assertFalse(dt.is_repeating)
+
+    def test_is_repeating_is_true_if_repeats_one_or_more_times(self):
+        dt = DonationType.objects.create(name="Simple", amount=100, repeat=1)
+        self.assertTrue(dt.is_repeating)
+
 
 class DonationTestCase(TestCase):
     def test_dispatches_to_configured_backend(self):

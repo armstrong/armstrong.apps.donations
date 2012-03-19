@@ -41,6 +41,10 @@ class DonationType(models.Model):
         help_text=_(u"Number of times (if any) this donation will repeat")
     )
 
+    @property
+    def is_repeating(self):
+        return self.repeat > 0
+
 
 class PromoCode(models.Model):
     code = models.CharField(max_length=20, unique=True)

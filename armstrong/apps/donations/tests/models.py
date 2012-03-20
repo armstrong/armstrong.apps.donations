@@ -24,30 +24,43 @@ class DonorTestCase(TestCase):
         self.assertEqual(name, d.name)
 
 
-class DonationTypeTestCase(TestCase):
-    def test_can_not_have_both_monthly_and_yearly(self):
-        with self.assertRaises(ValidationError) as e:
-            d = DonationType.objects.create(name="Will Fail",
-                    yearly=100, monthly=10)
-            # Calling clean() here the way a ModelForm would
-            d.clean()
-        self.assertEqual(
-            "You cannot use both yearly and monthly",
-            e.exception.messages[0]
-        )
+class DonationTypeOptionTestCase(TestCase):
+    def test_repeat_default_to_zero(self):
+        dt = models.DonationTypeOption.objects.create(name="Simple",
+                amount=100, donation_type=self.get_base_donation_type())
+        self.assertEqual(0, dt.repeat)
 
-    def test_amount_uses_yearly_if_available(self):
-        r = random.randint(1, 100)
-        a = DonationType.objects.create(name="Basic", yearly=r)
-        self.assertEqual(r, a.amount)
+    def test_is_repeating_is_false_by_default(self):
+        dt = models.DonationTypeOption.objects.create(name="Simple",
+                amount=100, donation_type=self.get_base_donation_type())
+        self.assertFalse(dt.is_repeating)
 
-    def test_amount_uses_monthly_if_available(self):
-        r = random.randint(1, 100)
-        a = DonationType.objects.create(name="Basic", monthly=r)
-        self.assertEqual(r, a.amount)
+    def test_is_repeating_is_true_if_repeats_one_or_more_times(self):
+        dt = models.DonationTypeOption.objects.create(name="Simple",
+                amount=100, repeat=1,
+                donation_type=self.get_base_donation_type())
+        self.assertTrue(dt.is_repeating)
 
 
 class DonationTestCase(TestCase):
+    def test_is_repeating_is_false_by_default(self):
+        d = Donation()
+        self.assertFalse(d.is_repeating)
+
+    def test_is_repeating_is_true_if_donation_type_repeats(self):
+        dt = models.DonationTypeOption(amount=100, repeat=1,
+                donation_type=DonationType.objects.create(name="Simple"))
+        d = Donation()
+        d.donation_type = dt
+        self.assertTrue(d.is_repeating)
+
+    def test_is_repeating_is_false_if_donation_type_does_not_repeat(self):
+        dt = models.DonationTypeOption(amount=100,
+                donation_type=DonationType.objects.create(name="Simple"))
+        d = Donation()
+        d.donation_type = dt
+        self.assertFalse(d.is_repeating)
+
     def test_dispatches_to_configured_backend(self):
         m = Donation()
         random_card = "some-random-card-%d" % random.randint(1000, 2000)
@@ -61,7 +74,9 @@ class DonationTestCase(TestCase):
         fudge.verify()
 
     def test_uses_donation_type_if_no_amount_provided(self):
-        donation_type = DonationType.objects.create(name="$10", monthly="10")
+        dt = DonationType.objects.create(name="$10")
+        donation_type = models.DonationTypeOption.objects.create(
+                donation_type=dt, amount="10")
         d = Donation()
         d.donation_type = donation_type
         d.donor = self.random_donor

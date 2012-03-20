@@ -40,7 +40,7 @@ class AuthorizeNetBackend(object):
         result = self.onetime_purchase(donation, form)
         if not result["status"]:
             return result
-        if donation.donation_type and donation.donation_type.repeat > 0:
+        if donation.is_repeating:
             response = self.recurring_purchase(donation, form)
             result["recurring_response"] = response
         if result["status"]:
@@ -70,7 +70,7 @@ class AuthorizeNetBackend(object):
         data.update({
             "amount": donation.amount,
             "interval_unit": arb.MONTHS_INTERVAL,
-            "interval_length": u"1",
+            "interval_length": u"%d" % donation.donation_type.length,
             "bill_first_name": u"%s" % donation.donor.name.split(" ")[0],
             "bill_last_name": u"%s" % donation.donor.name.split(" ", 1)[-1],
             "total_occurrences": donation.donation_type.repeat,

@@ -45,7 +45,7 @@ class BaseDonationFormTestCase(TestCase):
         form = forms.BaseDonationForm(data={
             "amount": "100",
             "name": "Bob Example",
-            "donation_type": random_type.name,
+            "donation_type_pk": random_type.pk,
         })
         donation = form.save()
         self.assertEqual(random_type, donation.donation_type)
@@ -56,7 +56,7 @@ class BaseDonationFormTestCase(TestCase):
         form = forms.BaseDonationForm(prefix=prefix, data={
             "%s-amount" % prefix: "100",
             "%s-name" % prefix: "Bob Example",
-            "%s-donation_type" % prefix: random_type.name,
+            "%s-donation_type_pk" % prefix: random_type.pk,
         })
         donation = form.save()
         self.assertEqual(random_type, donation.donation_type)
@@ -127,7 +127,7 @@ class BaseDonationFormTestCase(TestCase):
         donor_name = self.random_donor_name
         address_kwargs = self.random_address_kwargs
         data = self.get_base_random_data(name=donor_name,
-                donation_type=donation_type.name)
+                donation_type_pk=donation_type.pk)
         data.update(self.prefix_data(address_kwargs, prefix="billing"))
         del data["amount"]
 

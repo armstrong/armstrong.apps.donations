@@ -62,13 +62,13 @@ class BaseDonationForm(forms.Form):
     def is_valid(self, donation_only=False):
         donation_is_valid = super(BaseDonationForm, self).is_valid()
         if not donation_is_valid:
-            donation_type_field = self.add_prefix("donation_type")
+            donation_type_field = self.add_prefix("donation_type_pk")
             if donation_type_field in self.data:
-                donation_type_name = self.data[self.add_prefix("donation_type")]
+                donation_type_pk = self.data[donation_type_field]
                 try:
-                    models.DonationType.objects.get(name=donation_type_name)
+                    models.DonationTypeOption.objects.get(pk=donation_type_pk)
                     donation_is_valid = True
-                except models.DonationType.DoesNotExist:
+                except models.DonationTypeOption.DoesNotExist:
                     donation_is_valid = False
 
         if donation_only:
@@ -90,9 +90,9 @@ class BaseDonationForm(forms.Form):
         if promo_code_field_name in self.data and self.data[promo_code_field_name]:
             donation.code = models.PromoCode.objects.get(
                     code=self.data[promo_code_field_name])
-        if self.add_prefix("donation_type") in self.data:
-            donation.donation_type = models.DonationType.objects.get(
-                    name=self.data[self.add_prefix("donation_type")])
+        if self.add_prefix("donation_type_pk") in self.data:
+            donation.donation_type = models.DonationTypeOption.objects.get(
+                    pk=self.data[self.add_prefix("donation_type_pk")])
         donor = self.donor_form.save(commit=False)
         if self.billing_address_form.is_valid():
             donor.address = self.billing_address_form.save()

@@ -35,34 +35,26 @@ class DonationType(models.Model):
     name = models.CharField(
         max_length=100, help_text=_(u"Name of Donation Type")
     )
-    yearly = models.PositiveIntegerField(
-        default=None, null=True, blank=True,
-        help_text=_(u"Amount to donate for the year")
-    )
-    monthly = models.PositiveIntegerField(
-        default=None, null=True, blank=True,
-        help_text=_(u"Amount to donate for the month")
+
+
+class DonationTypeOption(models.Model):
+    donation_type = models.ForeignKey(DonationType, related_name="options")
+    amount = models.PositiveIntegerField(help_text=_(u"Amount to donate"))
+    length = models.PositiveIntegerField(default=1,
+        help_text=_(u"Number of months per repeat (1 is one month, 12 is one year)")
     )
     repeat = models.PositiveIntegerField(
-        default=None, null=True, blank=True,
+        default=0, null=True, blank=True,
         help_text=_(u"Number of times (if any) this donation will repeat")
     )
 
     @property
-    def amount(self):
-        return self.yearly if self.yearly else self.monthly
+    def name(self):
+        return self.donation_type.name
 
-    def clean(self):
-        """
-        Validate that this model is in the state you'd except
-
-        This is called by the various ModelForms that interact with it.
-        Keep in mind that this is not called when you explicitly create
-        a model via `objects.create()`.
-        """
-        from django.core.exceptions import ValidationError
-        if self.yearly and self.monthly:
-            raise ValidationError(_(u"You cannot use both yearly and monthly"))
+    @property
+    def is_repeating(self):
+        return self.repeat > 0
 
 
 class PromoCode(models.Model):
@@ -81,7 +73,7 @@ class PromoCode(models.Model):
 
 class Donation(models.Model):
     donor = models.ForeignKey(Donor)
-    donation_type = models.ForeignKey(DonationType, null=True, blank=True)
+    donation_type = models.ForeignKey(DonationTypeOption, null=True, blank=True)
     code = models.ForeignKey(PromoCode, null=True, blank=True)
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
@@ -99,3 +91,7 @@ class Donation(models.Model):
     def purchase(self, form):
         from . import backends
         return backends.get_backend().purchase(self, form)
+
+    @property
+    def is_repeating(self):
+        return self.donation_type and self.donation_type.is_repeating or False

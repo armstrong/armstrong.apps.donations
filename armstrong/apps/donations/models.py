@@ -14,6 +14,9 @@ class DonorAddress(models.Model):
     state = us.USStateField()
     zipcode = models.CharField(max_length=10)
 
+    def __unicode__(self):
+        return "%(address)s, %(city)s, %(state)s, %(zipcode)s" % self.__dict__
+
 
 class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)

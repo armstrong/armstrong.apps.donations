@@ -10,6 +10,21 @@ from .. import models
 from ..models import (Donor, Donation, DonationType)
 
 
+class DonorAddressTestCase(TestCase):
+    def test_outputs_address_as_string(self):
+        odd_or_even = random.randint(1, 10) % 2 is 0
+        address = "%d Some St" % random.randint(100, 200)
+        city = "Pleasantville" if odd_or_even else "Sometown"
+        state = "TX" if odd_or_even else "CA"
+        zipcode = random.randint(10000, 20000)
+
+        donor_address = models.DonorAddress(address=address, city=city,
+                state=state, zipcode=zipcode)
+
+        expected = "%s, %s, %s, %d" % (address, city, state, zipcode)
+        self.assertEqual(expected, str(donor_address))
+
+
 class DonorTestCase(TestCase):
     def test_can_be_created_from_user_with_profile(self):
         user = generate_random_user()

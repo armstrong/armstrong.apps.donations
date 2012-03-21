@@ -23,6 +23,11 @@ class DonorTestCase(TestCase):
         d = Donor.objects.create(user=user, name=name)
         self.assertEqual(name, d.name)
 
+    def test_outputs_name_as_string(self):
+        random_name = "Random Name %d" % random.randint(100, 200)
+        donor = models.Donor(name=random_name)
+        self.assertEqual(random_name, str(donor))
+
 
 class DonationTypeTestCase(TestCase):
     def test_outputs_name_as_string(self):

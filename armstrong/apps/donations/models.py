@@ -30,6 +30,9 @@ class Donor(models.Model):
             self.name = "%s %s" % (self.user.first_name, self.user.last_name)
         super(Donor, self).save(**kwargs)
 
+    def __unicode__(self):
+        return self.name
+
 
 class DonationType(models.Model):
     name = models.CharField(

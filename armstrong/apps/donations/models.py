@@ -107,3 +107,6 @@ class Donation(models.Model):
     @property
     def is_repeating(self):
         return self.donation_type and self.donation_type.is_repeating or False
+
+    def __unicode__(self):
+        return "%s donated %s" % (self.donor, self.amount)

@@ -147,6 +147,14 @@ class DonationTestCase(TestCase):
         self.assertModelHasField(models.Donation(), "anonymous",
                 models.models.BooleanField)
 
+    def test_can_be_cast_to_string(self):
+        donor = self.random_donor
+        amount = self.random_amount
+        donation = models.Donation(donor=donor, amount=amount)
+
+        expected = "%s donated %s" % (donor, amount)
+        self.assertEqual(expected, str(donation))
+
 
 class PromoCodeTestCase(TestCase):
     def test_calculate_returns_calculated_amount(self):

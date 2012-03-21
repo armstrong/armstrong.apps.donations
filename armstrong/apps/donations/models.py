@@ -14,6 +14,9 @@ class DonorAddress(models.Model):
     state = us.USStateField()
     zipcode = models.CharField(max_length=10)
 
+    def __unicode__(self):
+        return "%(address)s, %(city)s, %(state)s, %(zipcode)s" % self.__dict__
+
 
 class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
@@ -30,11 +33,17 @@ class Donor(models.Model):
             self.name = "%s %s" % (self.user.first_name, self.user.last_name)
         super(Donor, self).save(**kwargs)
 
+    def __unicode__(self):
+        return self.name
+
 
 class DonationType(models.Model):
     name = models.CharField(
         max_length=100, help_text=_(u"Name of Donation Type")
     )
+
+    def __unicode__(self):
+        return self.name
 
 
 class DonationTypeOption(models.Model):
@@ -55,6 +64,9 @@ class DonationTypeOption(models.Model):
     @property
     def is_repeating(self):
         return self.repeat > 0
+
+    def __unicode__(self):
+        return "%s (%d)" % (self.donation_type, self.amount)
 
 
 class PromoCode(models.Model):
@@ -95,3 +107,6 @@ class Donation(models.Model):
     @property
     def is_repeating(self):
         return self.donation_type and self.donation_type.is_repeating or False
+
+    def __unicode__(self):
+        return "%s donated %s" % (self.donor, self.amount)

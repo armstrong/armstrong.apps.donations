@@ -10,6 +10,21 @@ from .. import models
 from ..models import (Donor, Donation, DonationType)
 
 
+class DonorAddressTestCase(TestCase):
+    def test_outputs_address_as_string(self):
+        odd_or_even = random.randint(1, 10) % 2 is 0
+        address = "%d Some St" % random.randint(100, 200)
+        city = "Pleasantville" if odd_or_even else "Sometown"
+        state = "TX" if odd_or_even else "CA"
+        zipcode = random.randint(10000, 20000)
+
+        donor_address = models.DonorAddress(address=address, city=city,
+                state=state, zipcode=zipcode)
+
+        expected = "%s, %s, %s, %d" % (address, city, state, zipcode)
+        self.assertEqual(expected, str(donor_address))
+
+
 class DonorTestCase(TestCase):
     def test_can_be_created_from_user_with_profile(self):
         user = generate_random_user()
@@ -22,6 +37,18 @@ class DonorTestCase(TestCase):
         name = "Bob (%d)" % random.randint(1, 10)
         d = Donor.objects.create(user=user, name=name)
         self.assertEqual(name, d.name)
+
+    def test_outputs_name_as_string(self):
+        random_name = "Random Name %d" % random.randint(100, 200)
+        donor = models.Donor(name=random_name)
+        self.assertEqual(random_name, str(donor))
+
+
+class DonationTypeTestCase(TestCase):
+    def test_outputs_name_as_string(self):
+        random_name = "Random Name %d" % random.randint(1000, 2000)
+        dt = models.DonationType(name=random_name)
+        self.assertEqual(random_name, str(dt))
 
 
 class DonationTypeOptionTestCase(TestCase):
@@ -40,6 +67,16 @@ class DonationTypeOptionTestCase(TestCase):
                 amount=100, repeat=1,
                 donation_type=self.get_base_donation_type())
         self.assertTrue(dt.is_repeating)
+
+    def test_outputs_name_plus_amount_as_string(self):
+        random_name = "Random Name %d" % random.randint(1000, 2000)
+        random_amount = random.randint(1000, 2000)
+        donation_type = models.DonationType.objects.create(name=random_name)
+        option = models.DonationTypeOption(donation_type=donation_type,
+                amount=random_amount)
+
+        expected = "%s (%d)" % (random_name, random_amount)
+        self.assertEqual(expected, str(option))
 
 
 class DonationTestCase(TestCase):
@@ -109,6 +146,14 @@ class DonationTestCase(TestCase):
     def test_has_an_anonymous_field(self):
         self.assertModelHasField(models.Donation(), "anonymous",
                 models.models.BooleanField)
+
+    def test_can_be_cast_to_string(self):
+        donor = self.random_donor
+        amount = self.random_amount
+        donation = models.Donation(donor=donor, amount=amount)
+
+        expected = "%s donated %s" % (donor, amount)
+        self.assertEqual(expected, str(donation))
 
 
 class PromoCodeTestCase(TestCase):

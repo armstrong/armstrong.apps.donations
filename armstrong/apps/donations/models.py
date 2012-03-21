@@ -36,6 +36,9 @@ class DonationType(models.Model):
         max_length=100, help_text=_(u"Name of Donation Type")
     )
 
+    def __unicode__(self):
+        return self.name
+
 
 class DonationTypeOption(models.Model):
     donation_type = models.ForeignKey(DonationType, related_name="options")

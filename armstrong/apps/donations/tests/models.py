@@ -24,6 +24,13 @@ class DonorTestCase(TestCase):
         self.assertEqual(name, d.name)
 
 
+class DonationTypeTestCase(TestCase):
+    def test_outputs_name_as_string(self):
+        random_name = "Random Name %d" % random.randint(1000, 2000)
+        dt = models.DonationType(name=random_name)
+        self.assertEqual(random_name, str(dt))
+
+
 class DonationTypeOptionTestCase(TestCase):
     def test_repeat_default_to_zero(self):
         dt = models.DonationTypeOption.objects.create(name="Simple",

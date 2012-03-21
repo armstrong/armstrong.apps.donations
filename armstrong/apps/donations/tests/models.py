@@ -48,6 +48,16 @@ class DonationTypeOptionTestCase(TestCase):
                 donation_type=self.get_base_donation_type())
         self.assertTrue(dt.is_repeating)
 
+    def test_outputs_name_plus_amount_as_string(self):
+        random_name = "Random Name %d" % random.randint(1000, 2000)
+        random_amount = random.randint(1000, 2000)
+        donation_type = models.DonationType.objects.create(name=random_name)
+        option = models.DonationTypeOption(donation_type=donation_type,
+                amount=random_amount)
+
+        expected = "%s (%d)" % (random_name, random_amount)
+        self.assertEqual(expected, str(option))
+
 
 class DonationTestCase(TestCase):
     def test_is_repeating_is_false_by_default(self):

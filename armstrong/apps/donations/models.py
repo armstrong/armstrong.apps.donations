@@ -59,6 +59,9 @@ class DonationTypeOption(models.Model):
     def is_repeating(self):
         return self.repeat > 0
 
+    def __unicode__(self):
+        return "%s (%d)" % (self.donation_type, self.amount)
+
 
 class PromoCode(models.Model):
     code = models.CharField(max_length=20, unique=True)

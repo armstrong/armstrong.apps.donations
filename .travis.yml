@@ -2,8 +2,7 @@ language: python
 python:
  - 2.7
 install:
-  - pip install -i http://armstrong.github.com/pypi.armstrongcms.org/index/ -r requirements/dev.txt
-  - pip install .
+  - ./.travis_setup
 env:
   - SKIP_COVERAGE=1 SKIP_INSTALL=1
 script: fab test

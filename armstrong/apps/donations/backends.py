@@ -21,7 +21,8 @@ class AuthorizeNetBackend(object):
             recurring_api_class = arb.Api
         self.recurring_api_class = recurring_api_class
         if testing is None:
-            testing = getattr(self.settings, "ARMSTRONG_DONATIONS_TESTING", False)
+            testing = getattr(self.settings, "ARMSTRONG_DONATIONS_TESTING",
+                    False)
         self.testing = testing
 
     def get_api(self):

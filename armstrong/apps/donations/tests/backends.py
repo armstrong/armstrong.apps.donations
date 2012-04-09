@@ -67,7 +67,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 arg.any(), is_test=True)
 
         backend = backends.AuthorizeNetBackend(testing=True)
-        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+        with fudge.patched_context(backend, "recurring_api_class",
+                recurring_api_class):
             backend.get_recurring_api()
         fudge.verify()
 
@@ -76,7 +77,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 arg.any(), is_test=False)
 
         backend = backends.AuthorizeNetBackend()
-        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+        with fudge.patched_context(backend, "recurring_api_class",
+                recurring_api_class):
             backend.get_recurring_api()
         fudge.verify()
 
@@ -90,7 +92,6 @@ class AuthorizeNetBackendTestCase(TestCase):
         fudge.verify()
 
     def test_is_test_is_false_for_api_class_api_by_default(self):
-        settings = self.test_settings
         api_class = fudge.Fake().expects_call().with_args(arg.any(), arg.any(),
                 delimiter=arg.any(), is_test=False)
 

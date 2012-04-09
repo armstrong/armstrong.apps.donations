@@ -50,7 +50,8 @@ class DonationTypeOption(models.Model):
     donation_type = models.ForeignKey(DonationType, related_name="options")
     amount = models.PositiveIntegerField(help_text=_(u"Amount to donate"))
     length = models.PositiveIntegerField(default=1,
-        help_text=_(u"Number of months per repeat (1 is one month, 12 is one year)")
+        help_text=_(u"Number of months per repeat "
+                u"(1 is one month, 12 is one year)")
     )
     repeat = models.PositiveIntegerField(
         default=0, null=True, blank=True,
@@ -85,7 +86,8 @@ class PromoCode(models.Model):
 
 class Donation(models.Model):
     donor = models.ForeignKey(Donor)
-    donation_type = models.ForeignKey(DonationTypeOption, null=True, blank=True)
+    donation_type = models.ForeignKey(DonationTypeOption, null=True,
+            blank=True)
     code = models.ForeignKey(PromoCode, null=True, blank=True)
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)

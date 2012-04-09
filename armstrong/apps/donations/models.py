@@ -20,7 +20,8 @@ class DonorAddress(models.Model):
 
 class Donor(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
-    name = models.CharField(max_length=250)
+    first_name = models.CharField(max_length=250)
+    last_name = models.CharField(max_length=250)
     address = models.ForeignKey(DonorAddress, related_name="addresses",
             null=True, blank=True)
     mailing_address = models.ForeignKey(DonorAddress,
@@ -29,12 +30,15 @@ class Donor(models.Model):
     phone = models.CharField(max_length=10, null=True, blank=True)
 
     def save(self, **kwargs):
-        if self.user and not self.name:
-            self.name = "%s %s" % (self.user.first_name, self.user.last_name)
+        if self.user:
+            if not self.first_name:
+                self.first_name = self.user.first_name
+            if not self.last_name:
+                self.last_name = self.user.last_name
         super(Donor, self).save(**kwargs)
 
     def __unicode__(self):
-        return self.name
+        return "%s %s" % (self.first_name, self.last_name)
 
 
 class DonationType(models.Model):

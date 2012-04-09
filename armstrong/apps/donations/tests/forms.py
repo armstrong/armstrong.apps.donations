@@ -21,7 +21,8 @@ class BaseDonationFormTestCase(TestCase):
         promo_code = self.random_discount
         data = {
             "%s-amount" % prefix: "100",
-            "%s-name" % prefix: "Bob Example",
+            "%s-first_name" % prefix: "Bob",
+            "%s-last_name" % prefix: "Example",
             "%s-promo_code" % prefix: promo_code.code,
         }
         form = forms.BaseDonationForm(prefix=prefix, data=data)
@@ -44,7 +45,8 @@ class BaseDonationFormTestCase(TestCase):
         random_type = self.random_type
         form = forms.BaseDonationForm(data={
             "amount": "100",
-            "name": "Bob Example",
+            "first_name": "Bob",
+            "last_name": "Example",
             "donation_type_pk": random_type.pk,
         })
         donation = form.save()
@@ -55,7 +57,8 @@ class BaseDonationFormTestCase(TestCase):
         prefix = "random%d" % random.randint(1, 9)
         form = forms.BaseDonationForm(prefix=prefix, data={
             "%s-amount" % prefix: "100",
-            "%s-name" % prefix: "Bob Example",
+            "%s-first_name" % prefix: "Bob",
+            "%s-last_name" % prefix: "Example",
             "%s-donation_type_pk" % prefix: random_type.pk,
         })
         donation = form.save()
@@ -73,7 +76,8 @@ class BaseDonationFormTestCase(TestCase):
         is_valid_true = fudge.Fake().provides("is_valid").returns(True)
         is_valid_false = fudge.Fake().provides("is_valid").returns(False)
         form = forms.BaseDonationForm(data={
-                "name": "Foo",
+                "first_name": "Foo",
+                "last_name": "Bar",
                 "amount": "10.00",
         })
         attrs = ["billing_address_form", "donor_form", "mailing_address_form"]
@@ -88,7 +92,8 @@ class BaseDonationFormTestCase(TestCase):
         is_valid_true = fudge.Fake().provides("is_valid").returns(True)
         is_valid_false = fudge.Fake().provides("is_valid").returns(False)
         form = forms.BaseDonationForm(data={
-                "name": "Foo",
+                "first_name": "Foo",
+                "last_name": "Bar",
                 "amount": "10.00",
                 constants.MAILING_SAME_AS_BILLING: u"1",
         })
@@ -99,10 +104,10 @@ class BaseDonationFormTestCase(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_saves_mailing_address_if_present(self):
-        donor_name = self.random_donor_name
+        name_kwargs = self.random_donor_kwargs
         address_kwargs = self.random_address_kwargs
         mailing_address_kwargs = self.random_address_kwargs
-        data = self.get_base_random_data(name=donor_name)
+        data = self.get_base_random_data(**name_kwargs)
         data.update(self.prefix_data(address_kwargs, prefix="billing"))
         data.update(self.prefix_data(mailing_address_kwargs, prefix="mailing"))
         del data[constants.MAILING_SAME_AS_BILLING]
@@ -117,17 +122,15 @@ class BaseDonationFormTestCase(TestCase):
                 **mailing_address_kwargs)
         self.assertNotEqual(address, mailing_address)
 
-        donor = models.Donor.objects.get(name=donor_name)
+        donor = models.Donor.objects.get(**name_kwargs)
         # import ipdb; ipdb.set_trace()
         self.assertEqual(address, donor.address)
         self.assertEqual(mailing_address, donor.mailing_address)
 
     def test_is_valid_is_true_if_donation_type_provided_and_no_amount(self):
         donation_type = self.random_type
-        donor_name = self.random_donor_name
         address_kwargs = self.random_address_kwargs
-        data = self.get_base_random_data(name=donor_name,
-                donation_type_pk=donation_type.pk)
+        data = self.get_base_random_data(donation_type_pk=donation_type.pk)
         data.update(self.prefix_data(address_kwargs, prefix="billing"))
         del data["amount"]
 
@@ -135,9 +138,8 @@ class BaseDonationFormTestCase(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_is_valid_returns_false_with_invalid_donation_type(self):
-        donor_name = self.random_donor_name
         address_kwargs = self.random_address_kwargs
-        data = self.get_base_random_data(name=donor_name,
+        data = self.get_base_random_data(
                 donation_type="unknown and unknowable")
         data.update(self.prefix_data(address_kwargs, prefix="billing"))
         del data["amount"]

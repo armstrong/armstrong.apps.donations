@@ -72,8 +72,8 @@ class AuthorizeNetBackend(object):
             "amount": donation.amount,
             "interval_unit": arb.MONTHS_INTERVAL,
             "interval_length": u"%d" % donation.donation_type.length,
-            "bill_first_name": u"%s" % donation.donor.name.split(" ")[0],
-            "bill_last_name": u"%s" % donation.donor.name.split(" ", 1)[-1],
+            "bill_first_name": u"%s" % donation.donor.first_name,
+            "bill_last_name": u"%s" % donation.donor.last_name,
             "total_occurrences": donation.donation_type.repeat,
             "start_date": start_date,
         })
@@ -92,8 +92,8 @@ class AuthorizeNetBackend(object):
         data.update({
             "amount": donation.amount,
             "description": u"Donation: $%d" % donation.amount,
-            "first_name": unicode(donor.name.split(" ")[0]),
-            "last_name": unicode(donor.name.split(" ", 1)[-1]),
+            "first_name": unicode(donor.first_name),
+            "last_name": unicode(donor.last_name),
 
             # TODO: extract and be conditional
             "address": donor.address.address,

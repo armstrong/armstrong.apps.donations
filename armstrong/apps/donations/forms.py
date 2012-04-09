@@ -1,6 +1,5 @@
 from django import forms
 from django.conf import settings
-from django.forms.models import modelformset_factory
 
 from .constants import MONTH_CHOICES
 from .constants import YEAR_CHOICES
@@ -15,7 +14,8 @@ if hasattr(settings, "ARMSTRONG_INITIAL_STATE"):
 
 
 class BaseDonationForm(forms.Form):
-    name = forms.CharField()
+    first_name = forms.CharField()
+    last_name = forms.CharField()
     amount = forms.DecimalField(decimal_places=2)
     attribution = forms.CharField(required=False,
             help_text=text.get("donation.help_text.attribution"))
@@ -87,7 +87,8 @@ class BaseDonationForm(forms.Form):
     def save(self, **kwargs):
         donation = models.Donation(**self.get_donation_kwargs())
         promo_code_field_name = self.add_prefix("promo_code")
-        if promo_code_field_name in self.data and self.data[promo_code_field_name]:
+        if (promo_code_field_name in self.data
+                and self.data[promo_code_field_name]):
             donation.code = models.PromoCode.objects.get(
                     code=self.data[promo_code_field_name])
         if self.add_prefix("donation_type_pk") in self.data:

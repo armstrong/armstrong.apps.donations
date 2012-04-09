@@ -29,19 +29,23 @@ class DonorTestCase(TestCase):
     def test_can_be_created_from_user_with_profile(self):
         user = generate_random_user()
         donor = Donor.objects.create(user=user)
-        expected = "%s %s" % (user.first_name, user.last_name)
-        self.assertEqual(expected, donor.name)
+        self.assertEqual(user.first_name, donor.first_name)
+        self.assertEqual(user.last_name, donor.last_name)
 
-    def test_name_is_given_priority_if_specified_with_user(self):
+    def test_first_name_is_given_priority_if_specified_with_user(self):
         user = generate_random_user()
         name = "Bob (%d)" % random.randint(1, 10)
-        d = Donor.objects.create(user=user, name=name)
-        self.assertEqual(name, d.name)
+        d = Donor.objects.create(user=user, first_name=name)
+        self.assertEqual(name, d.first_name)
+        self.assertEqual(user.last_name, d.last_name)
 
     def test_outputs_name_as_string(self):
-        random_name = "Random Name %d" % random.randint(100, 200)
-        donor = models.Donor(name=random_name)
-        self.assertEqual(random_name, str(donor))
+        random_name = "Random %d" % random.randint(100, 200)
+        random_last_name = "Name %d" % random.randint(100, 200)
+        donor = models.Donor(first_name=random_name,
+                last_name=random_last_name)
+        self.assertEqual(" ".join([random_name, random_last_name]),
+                str(donor))
 
 
 class DonationTypeTestCase(TestCase):

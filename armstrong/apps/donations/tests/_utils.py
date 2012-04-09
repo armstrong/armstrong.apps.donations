@@ -32,8 +32,19 @@ class TestCase(ArmstrongTestCase):
             [p.restore() for p in self.patches]
 
     @property
+    def random_donor_kwargs(self):
+        return {
+            "first_name": self.random_donor_name,
+            "last_name": self.random_donor_last_name,
+        }
+
+    @property
     def random_donor_name(self):
-        return "Bob Example (%d)" % random.randint(100, 200)
+        return "Bob (%d)" % random.randint(100, 200)
+
+    @property
+    def random_donor_last_name(self):
+        return "Example (%d)" % random.randint(100, 200)
 
     @property
     def random_address_kwargs(self):
@@ -51,7 +62,8 @@ class TestCase(ArmstrongTestCase):
     @property
     def random_donor(self):
         return Donor.objects.create(
-            name=self.random_donor_name,
+            first_name=self.random_donor_name,
+            last_name=self.random_donor_last_name,
             address=self.random_address,
             mailing_address=self.random_address
         )
@@ -115,13 +127,13 @@ class TestCase(ArmstrongTestCase):
     def get_base_random_data(self, **kwargs):
         now = datetime.datetime.now()
         data = {
-            "name": self.random_donor_name,
+            "first_name": self.random_donor_name,
+            "last_name": self.random_donor_last_name,
             "amount": self.random_amount,
             "card_number": self.random_card_number,
             "ccv_code": "123",
             "expiration_month": "%02d" % now.month,
             "expiration_year": "%04d" % (now + datetime.timedelta(365)).year,
-            "name": self.random_donor_name,
             "mailing_same_as_billing": u"1",
         }
         data.update(kwargs)
@@ -197,8 +209,8 @@ class TestCase(ArmstrongTestCase):
     @property
     def random_donation_and_form(self):
         donation = self.random_donation
-        data = self.get_base_random_data(name=donation.donor.name,
-                amount=donation.amount)
+        data = self.get_base_random_data(first_name=donation.donor.first_name,
+                last_name=donation.donor.last_name, amount=donation.amount)
         donation_form = forms.AuthorizeDonationForm(data)
         donation_form.is_valid()
         return donation, donation_form

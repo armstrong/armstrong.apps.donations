@@ -257,32 +257,33 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         self.assertFalse(self.get_view_object().requires_confirmation)
 
     def test_saves_donation_on_post_with_minimal_information(self):
-        donor_name = self.random_donor_name
+        name_kwargs = self.random_donor_kwargs
         random_amount = self.random_amount
-        data = self.get_base_random_data(name=donor_name, amount=random_amount)
+        data = self.get_base_random_data(amount=random_amount,
+                **name_kwargs)
         data.update(self.get_data_as_formset())
 
         # sanity check
         self.assertRaises(models.Donor.DoesNotExist,
-                models.Donor.objects.get, name=donor_name)
+                models.Donor.objects.get, **name_kwargs)
         with override_settings(ARMSTRONG_DONATION_FORM="SimpleDonationForm"):
             self.client.post(self.url, data)
-        donor = models.Donor.objects.get(name=donor_name)
-        self.assertEqual(donor.name, donor_name)
+        donor = models.Donor.objects.get(**name_kwargs)
+        self.assertEqual(str(donor), " ".join(name_kwargs.values()))
         donation = models.Donation.objects.get(donor=donor)
         self.assertEqual(donation.amount, random_amount)
 
     def test_uses_promo_code_if_available(self):
         promo_code = self.random_discount
-        donor_name = self.random_donor_name
+        name_kwargs = self.random_donor_kwargs
         random_amount = self. random_amount
-        data = self.get_base_random_data(name=donor_name, amount=random_amount,
-                promo_code=promo_code.code)
+        data = self.get_base_random_data(amount=random_amount,
+                promo_code=promo_code.code, **name_kwargs)
         data.update(self.prefix_data(self.random_address_kwargs,
                 prefix="billing"))
 
         self.client.post(self.url, data)
-        donor = models.Donor.objects.get(name=donor_name)
+        donor = models.Donor.objects.get(**name_kwargs)
         donation = models.Donation.objects.get(donor=donor)
         self.assertEqual(promo_code, donation.code)
 
@@ -291,22 +292,22 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
                 donation.amount, places=2)
 
     def test_saves_address_if_present(self):
-        donor_name = self.random_donor_name
+        name_kwargs = self.random_donor_kwargs
         address_kwargs = self.random_address_kwargs
-        data = self.get_base_random_data(name=donor_name)
+        data = self.get_base_random_data(**name_kwargs)
         data.update(self.prefix_data(address_kwargs, prefix="billing"))
 
         self.client.post(self.url, data)
-        donor = models.Donor.objects.get(name=donor_name)
+        donor = models.Donor.objects.get(**name_kwargs)
         address = models.DonorAddress.objects.get(**address_kwargs)
         self.assertEqual(address, donor.address)
         self.assertEqual(address, donor.mailing_address)
 
     def test_saves_mailing_address_if_present(self):
-        donor_name = self.random_donor_name
+        name_kwargs = self.random_donor_kwargs
         address_kwargs = self.random_address_kwargs
         mailing_address_kwargs = self.random_address_kwargs
-        data = self.get_base_random_data(name=donor_name)
+        data = self.get_base_random_data(**name_kwargs)
         data.update(self.prefix_data(address_kwargs, prefix="billing"))
         data.update(self.prefix_data(mailing_address_kwargs, prefix="mailing"))
         del data[constants.MAILING_SAME_AS_BILLING]
@@ -320,7 +321,7 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
                 **mailing_address_kwargs)
         self.assertNotEqual(address, mailing_address)
 
-        donor = models.Donor.objects.get(name=donor_name)
+        donor = models.Donor.objects.get(**name_kwargs)
         self.assertEqual(address, donor.address)
         self.assertEqual(mailing_address, donor.mailing_address)
 
@@ -340,7 +341,8 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         data = self.random_post_data
         data["mailing_same_as_billing"] = u"1"
         self.client.post(self.url, data)
-        donor = models.Donor.objects.get(name=data["name"])
+        donor = models.Donor.objects.get(first_name=data["first_name"],
+                last_name=data["last_name"])
         self.assertEqual(donor.address, donor.mailing_address)
 
     def test_same_as_billing_overrides_second_address(self):
@@ -351,7 +353,8 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
                 prefix="mailing"))
         data["mailing_same_as_billing"] = u"1"
         self.client.post(self.url, data)
-        donor = models.Donor.objects.get(name=data["name"])
+        donor = models.Donor.objects.get(first_name=data["first_name"],
+                last_name=data["last_name"])
         self.assertEqual(donor.address, donor.mailing_address)
 
     def test_redirects_to_success_url_after_successful_save(self):
@@ -361,10 +364,10 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
 
     def test_displays_errors_on_donor_validation_error(self):
         data = self.random_post_data
-        del data["name"]
+        del data["first_name"]
         response = self.client.post(self.url, data)
         self.assert_template("armstrong/donations/donation.html", response)
-        self.assert_form_has_errors(response, "donor_form", ["name", ])
+        self.assert_form_has_errors(response, "donor_form", ["first_name", ])
 
     def test_displays_error_on_donation_form_validation_error(self):
         data = self.random_post_data

@@ -67,7 +67,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 arg.any(), is_test=True)
 
         backend = backends.AuthorizeNetBackend(testing=True)
-        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+        with fudge.patched_context(backend, "recurring_api_class",
+                recurring_api_class):
             backend.get_recurring_api()
         fudge.verify()
 
@@ -76,7 +77,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 arg.any(), is_test=False)
 
         backend = backends.AuthorizeNetBackend()
-        with fudge.patched_context(backend, "recurring_api_class", recurring_api_class):
+        with fudge.patched_context(backend, "recurring_api_class",
+                recurring_api_class):
             backend.get_recurring_api()
         fudge.verify()
 
@@ -90,7 +92,6 @@ class AuthorizeNetBackendTestCase(TestCase):
         fudge.verify()
 
     def test_is_test_is_false_for_api_class_api_by_default(self):
-        settings = self.test_settings
         api_class = fudge.Fake().expects_call().with_args(arg.any(), arg.any(),
                 delimiter=arg.any(), is_test=False)
 
@@ -189,8 +190,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                         int(donation_form.cleaned_data["expiration_month"]),
                         int(donation_form.cleaned_data["expiration_year"])),
                 description=u"Donation: $%d" % donation.amount,
-                first_name=unicode(donation.donor.name.split(" ")[0]),
-                last_name=unicode(donation.donor.name.split(" ", 1)[-1]),
+                first_name=unicode(donation.donor.first_name),
+                last_name=unicode(donation.donor.last_name),
                 address=donation.donor.address.address,
                 city=donation.donor.address.city,
                 state=donation.donor.address.state,
@@ -215,8 +216,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                         int(donation_form.cleaned_data["expiration_month"]),
                         int(donation_form.cleaned_data["expiration_year"])),
                 description=u"Donation: $%d" % donation.amount,
-                first_name=unicode(donation.donor.name.split(" ")[0]),
-                last_name=unicode(donation.donor.name.split(" ", 1)[-1]),
+                first_name=unicode(donation.donor.first_name),
+                last_name=unicode(donation.donor.last_name),
                 address=donation.donor.address.address,
                 city=donation.donor.address.city,
                 state=donation.donor.address.state,
@@ -367,8 +368,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 card_number=donation_form.cleaned_data["card_number"],
                 card_code=donation_form.cleaned_data["ccv_code"],
                 expiration_date=expiration_date,
-                bill_first_name=u"%s" % donation.donor.name.split(" ")[0],
-                bill_last_name=u"%s" % donation.donor.name.split(" ", 1)[-1],
+                bill_first_name=u"%s" % donation.donor.first_name,
+                bill_last_name=u"%s" % donation.donor.last_name,
                 total_occurrences=donation.donation_type.repeat,
                 start_date=start_date,
         ).returns({"messages": {"result_code": {"text_": u"Ok"}}})
@@ -397,8 +398,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 card_number=donation_form.cleaned_data["card_number"],
                 card_code=donation_form.cleaned_data["ccv_code"],
                 expiration_date=expiration_date,
-                bill_first_name=u"%s" % donation.donor.name.split(" ")[0],
-                bill_last_name=u"%s" % donation.donor.name.split(" ", 1)[-1],
+                bill_first_name=u"%s" % donation.donor.first_name,
+                bill_last_name=u"%s" % donation.donor.last_name,
                 total_occurrences=donation.donation_type.repeat,
                 start_date=start_date,
         ).returns({"messages": {"result_code": {"text_": u"Ok"}}})
@@ -427,8 +428,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 card_number=donation_form.cleaned_data["card_number"],
                 card_code=donation_form.cleaned_data["ccv_code"],
                 expiration_date=expiration_date,
-                bill_first_name=u"%s" % donation.donor.name.split(" ")[0],
-                bill_last_name=u"%s" % donation.donor.name.split(" ", 1)[-1],
+                bill_first_name=u"%s" % donation.donor.first_name,
+                bill_last_name=u"%s" % donation.donor.last_name,
                 total_occurrences=donation.donation_type.repeat,
                 start_date=start_date,
                 test_request=u"TRUE",

@@ -64,6 +64,17 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual("bob@example.com", donation.donor.email)
 
+    def test_uses_user_email_if_no_email_is_present(self):
+        user = self.random_user
+        user.email = "alice@example.com"
+        user.save()
+        data = self.get_base_random_data()
+        data["user_pk"] = user.pk
+        data["email"] = ""
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual("alice@example.com", donation.donor.email)
+
     def test_saves_user_if_user_pk_is_submitted_on_prefixed_form(self):
         prefix = "prefix%d" % random.randint(100, 200)
         user = self.random_user

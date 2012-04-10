@@ -99,6 +99,8 @@ class BaseDonationForm(forms.Form):
         try:
             user = User.objects.get(pk=self.data[self.add_prefix("user_pk")])
             donor.user = user
+            if not donor.email:
+                donor.email = user.email
         except (KeyError, ValueError):
             pass
         if self.billing_address_form.is_valid():

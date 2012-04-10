@@ -16,6 +16,13 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual(random_attribution, donation.attribution)
 
+    def test_anonymous_is_checked_if_present(self):
+        data = self.get_base_random_data()
+        data["anonymous"] = "1"
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertTrue(donation.anonymous)
+
     def test_applies_promo_code(self):
         promo_code = self.random_discount
         data = self.get_base_random_data()

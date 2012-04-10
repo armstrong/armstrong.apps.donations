@@ -1,5 +1,6 @@
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from .constants import MONTH_CHOICES
 from .constants import YEAR_CHOICES
@@ -95,6 +96,9 @@ class BaseDonationForm(forms.Form):
             donation.donation_type = models.DonationTypeOption.objects.get(
                     pk=self.data[self.add_prefix("donation_type_pk")])
         donor = self.donor_form.save(commit=False)
+        if self.add_prefix("user_pk") in self.data:
+            user = User.objects.get(pk=self.data[self.add_prefix("user_pk")])
+            donor.user = user
         if self.billing_address_form.is_valid():
             donor.address = self.billing_address_form.save()
             donor.mailing_address = self.mailing_address_form.save() if \

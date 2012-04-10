@@ -36,6 +36,58 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual(None, donation.code)
 
+    def test_does_not_save_user_by_default(self):
+        data = self.get_base_random_data()
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual(None, donation.donor.user)
+
+    def test_saves_user_if_user_pk_is_submitted(self):
+        user = self.random_user
+        data = self.get_base_random_data()
+        data["user_pk"] = user.pk
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual(user.pk, donation.donor.user.pk)
+
+    def test_behaves_if_an_empty_user_pk_is_given(self):
+        data = self.get_base_random_data()
+        data["user_pk"] = ""
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual(None, donation.donor.user)
+
+    def test_saves_email_if_submitted(self):
+        data = self.get_base_random_data()
+        data["email"] = "bob@example.com"
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual("bob@example.com", donation.donor.email)
+
+    def test_uses_user_email_if_no_email_is_present(self):
+        user = self.random_user
+        user.email = "alice@example.com"
+        user.save()
+        data = self.get_base_random_data()
+        data["user_pk"] = user.pk
+        data["email"] = ""
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual("alice@example.com", donation.donor.email)
+
+    def test_saves_user_if_user_pk_is_submitted_on_prefixed_form(self):
+        prefix = "prefix%d" % random.randint(100, 200)
+        user = self.random_user
+        form = forms.BaseDonationForm(prefix=prefix, data={
+            "%s-amount" % prefix: "100",
+            "%s-first_name" % prefix: "Bob",
+            "%s-last_name" % prefix: "Example",
+            "%s-donation_type_pk" % prefix: self.random_type.pk,
+            "%s-user_pk" % prefix: user.pk,
+        })
+        donation = form.save()
+        self.assertEqual(user.pk, donation.donor.user.pk)
+
     def test_errors_if_more_than_two_digits_are_provided(self):
         form = forms.BaseDonationForm(data={"amount": "100.123"})
         self.assertFalse(form.is_valid(donation_only=True))

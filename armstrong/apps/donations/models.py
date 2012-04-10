@@ -28,6 +28,7 @@ class Donor(models.Model):
             related_name="mailing_addresses", null=True, blank=True)
     # TODO: Make sure form widget is USPhoneNumberField
     phone = models.CharField(max_length=10, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
 
     def save(self, **kwargs):
         if self.user:

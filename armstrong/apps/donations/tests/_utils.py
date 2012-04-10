@@ -1,6 +1,7 @@
 from armstrong.dev.tests.utils.base import ArmstrongTestCase
 from armstrong.dev.tests.utils.users import generate_random_user
 import datetime
+from django.contrib.auth.models import User
 from django.test.client import RequestFactory
 import fudge
 import random
@@ -30,6 +31,14 @@ class TestCase(ArmstrongTestCase):
     def restore_patched_objects(self):
         if hasattr(self, "patches"):
             [p.restore() for p in self.patches]
+
+    @property
+    def random_user(self):
+        return User.objects.create(
+                username="random_user_%d" % random.randint(100, 200),
+                first_name=self.random_donor_name,
+                last_name=self.random_donor_last_name,
+        )
 
     @property
     def random_donor_kwargs(self):

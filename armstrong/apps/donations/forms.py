@@ -58,6 +58,7 @@ class BaseDonationForm(forms.Form):
             return {}
         return {
             "amount": self.cleaned_data["amount"],
+            "attribution": self.cleaned_data["attribution"],
         }
 
     def is_valid(self, donation_only=False):

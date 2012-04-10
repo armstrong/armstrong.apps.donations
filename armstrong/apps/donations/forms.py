@@ -96,9 +96,11 @@ class BaseDonationForm(forms.Form):
             donation.donation_type = models.DonationTypeOption.objects.get(
                     pk=self.data[self.add_prefix("donation_type_pk")])
         donor = self.donor_form.save(commit=False)
-        if self.add_prefix("user_pk") in self.data:
+        try:
             user = User.objects.get(pk=self.data[self.add_prefix("user_pk")])
             donor.user = user
+        except (KeyError, ValueError):
+            pass
         if self.billing_address_form.is_valid():
             donor.address = self.billing_address_form.save()
             donor.mailing_address = self.mailing_address_form.save() if \

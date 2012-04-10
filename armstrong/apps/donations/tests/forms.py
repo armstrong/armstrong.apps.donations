@@ -50,6 +50,14 @@ class BaseDonationFormTestCase(TestCase):
         donation = form.save()
         self.assertEqual(user.pk, donation.donor.user.pk)
 
+    def test_behaves_if_an_empty_user_pk_is_given(self):
+        user = self.random_user
+        data = self.get_base_random_data()
+        data["user_pk"] = ""
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual(None, donation.donor.user)
+
     def test_saves_user_if_user_pk_is_submitted_on_prefixed_form(self):
         prefix = "prefix%d" % random.randint(100, 200)
         user = self.random_user

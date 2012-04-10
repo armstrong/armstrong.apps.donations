@@ -8,6 +8,34 @@ from .. import models
 
 
 class BaseDonationFormTestCase(TestCase):
+    def test_attribution_is_stored(self):
+        random_attribution = "Random Attribution %d" % random.randint(100, 200)
+        data = self.get_base_random_data()
+        data["attribution"] = random_attribution
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertEqual(random_attribution, donation.attribution)
+
+    def test_anonymous_is_off_by_default_with_no_attribution_provided(self):
+        data = self.get_base_random_data()
+        if "anonymous" in data:
+            del data["anonymous"]
+        donation = forms.BaseDonationForm(data).save()
+        self.assertFalse(donation.anonymous)
+
+    def test_anonymous_is_off_if_an_empty_anonymous_value_is_provided(self):
+        data = self.get_base_random_data()
+        data["anonymous"] = ""
+        donation = forms.BaseDonationForm(data).save()
+        self.assertFalse(donation.anonymous)
+
+    def test_anonymous_is_checked_if_present(self):
+        data = self.get_base_random_data()
+        data["anonymous"] = "1"
+        form = forms.BaseDonationForm(data)
+        donation = form.save()
+        self.assertTrue(donation.anonymous)
+
     def test_applies_promo_code(self):
         promo_code = self.random_discount
         data = self.get_base_random_data()

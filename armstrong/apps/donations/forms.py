@@ -64,13 +64,14 @@ class BaseDonationForm(forms.Form):
 
     def is_valid(self, donation_only=False):
         donation_is_valid = super(BaseDonationForm, self).is_valid()
-        if not donation_is_valid:
+        if not donation_is_valid and "amount" in self.errors:
             donation_type_field = self.add_prefix("donation_type_pk")
             if donation_type_field in self.data:
                 donation_type_pk = self.data[donation_type_field]
                 try:
                     models.DonationTypeOption.objects.get(pk=donation_type_pk)
-                    donation_is_valid = True
+                    del self.errors["amount"]
+                    donation_is_valid = len(self.errors) is 0
                 except models.DonationTypeOption.DoesNotExist:
                     donation_is_valid = False
 

@@ -227,6 +227,32 @@ class BaseDonationFormTestCase(TestCase):
         form = forms.BaseDonationForm(data=data)
         self.assertFalse(form.is_valid())
 
+    def test_is_valid_respects_form_even_with_valid_donation_type(self):
+        donation_type = self.random_type
+        address_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(donation_type_pk=donation_type.pk)
+        data.update(self.prefix_data(address_kwargs, prefix="billing"))
+        del data["amount"]
+        del data["first_name"]
+
+        form = forms.BaseDonationForm(data=data)
+        self.assertFalse(form.is_valid())
+
+    def test_is_valid_works_with_sub_forms(self):
+        donation_type = self.random_type
+        address_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(donation_type_pk=donation_type.pk)
+        data.update(self.prefix_data(address_kwargs, prefix="billing"))
+        del data["amount"]
+
+        class MyAwesomeForm(forms.BaseDonationForm):
+            extra_field = forms.forms.BooleanField()
+
+        form = MyAwesomeForm(data=data)
+        self.assertFalse(form.is_valid())
+
+
+
 
 class CreditCardDonationFormTestCase(TestCase):
     def setUp(self):

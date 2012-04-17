@@ -258,6 +258,10 @@ class BaseDonationFormTestCase(DjangoFormAssertionsMixin, TestCase):
         form = MyAwesomeForm(data=data)
         self.assertFalse(form.is_valid())
 
+    def test_has_a_donor_form_property(self):
+        form = forms.BaseDonationForm()
+        self.assertIsA(form.donor_form, forms.DonorForm)
+
     def test_is_valid_returns_false_if_donor_form_invalid_donor(self):
         for field_name in ["first_name", "last_name", ]:
             data = self.get_base_random_data()

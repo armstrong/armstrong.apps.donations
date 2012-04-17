@@ -84,7 +84,6 @@ class DonationFormView(TemplateView):
         donation_form = self.get_donation_form()
         context = {
             "form_action_url": self.form_action_url,
-            "donor_form": donation_form.donor_form,
             "donation_form": donation_form,
         }
         context.update(kwargs)

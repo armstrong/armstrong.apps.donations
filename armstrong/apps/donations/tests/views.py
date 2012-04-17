@@ -136,10 +136,6 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         self.assert_value_in_context(response, "form_action_url", "")
 
     @get_response
-    def test_adds_donor_form_to_context(self, response):
-        self.assert_type_in_context(response, "donor_form", forms.DonorForm)
-
-    @get_response
     def test_adds_donation_formset_to_context(self, response):
         self.assert_type_in_context(response, "donation_form",
                 forms.BaseDonationForm)
@@ -361,13 +357,6 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         data = self.random_post_data
         response = self.client.post(self.url, data)
         self.assertRedirects(response, reverse("donations_thanks"))
-
-    def test_displays_errors_on_donor_validation_error(self):
-        data = self.random_post_data
-        del data["first_name"]
-        response = self.client.post(self.url, data)
-        self.assert_template("armstrong/donations/donation.html", response)
-        self.assert_form_has_errors(response, "donor_form", ["first_name", ])
 
     def test_displays_error_on_donation_form_validation_error(self):
         data = self.random_post_data

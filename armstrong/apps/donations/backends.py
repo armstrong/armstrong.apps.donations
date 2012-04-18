@@ -8,7 +8,15 @@ from . import forms
 from . import signals
 
 
-class AuthorizeNetBackend(object):
+class Backend(object):
+    def get_form_class(self):
+        raise NotImplementedError
+
+    def purchase(self, donation, form):
+        raise NotImplementedError
+
+
+class AuthorizeNetBackend(Backend):
     def __init__(self, api_class=None, recurring_api_class=None,
             settings=None, testing=None):
         if api_class is None:
@@ -25,15 +33,6 @@ class AuthorizeNetBackend(object):
                     False)
         self.testing = testing
 
-    def get_api(self):
-        return self.api_class(self.settings.AUTHORIZE["LOGIN"],
-                self.settings.AUTHORIZE["KEY"], delimiter=u"|",
-                is_test=self.testing)
-
-    def get_recurring_api(self):
-        return self.recurring_api_class(self.settings.AUTHORIZE["LOGIN"],
-                self.settings.AUTHORIZE["KEY"], is_test=self.testing)
-
     def get_form_class(self):
         return forms.AuthorizeDonationForm
 
@@ -48,6 +47,15 @@ class AuthorizeNetBackend(object):
             donation.processed = True
             self.send_successful_purchase(donation, form, result)
         return result
+
+    def get_api(self):
+        return self.api_class(self.settings.AUTHORIZE["LOGIN"],
+                self.settings.AUTHORIZE["KEY"], delimiter=u"|",
+                is_test=self.testing)
+
+    def get_recurring_api(self):
+        return self.recurring_api_class(self.settings.AUTHORIZE["LOGIN"],
+                self.settings.AUTHORIZE["KEY"], is_test=self.testing)
 
     def send_successful_purchase(self, donation, form, result):
         """

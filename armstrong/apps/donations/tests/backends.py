@@ -14,6 +14,18 @@ from .. import forms
 from .. import signals
 
 
+class BackendTestCase(TestCase):
+    def test_get_form_class_raises_NotYetImplemented(self):
+        backend = backends.Backend()
+        self.assertRaises(NotImplementedError, backend.get_form_class)
+
+    def test_purchase_raises_NotYetImplemented(self):
+        backend = backends.Backend()
+        donation, form = self.random_donation_and_form
+        self.assertRaises(NotImplementedError, backend.purchase,
+                donation, form)
+
+
 class AuthorizeNetBackendTestCase(TestCase):
     def get_api_stub(self, response=None, reason_text=None, successful=True):
         if response is None:

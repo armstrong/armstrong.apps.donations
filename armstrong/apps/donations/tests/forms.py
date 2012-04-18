@@ -289,3 +289,7 @@ class CreditCardDonationFormTestCase(TestCase):
         form.strip_sensitive_info = False
         self.assertFalse(form.is_valid())
         self.assertNotEqual("", form[field].value())
+
+
+class AuthorizeDonationFormTestCase(CreditCardDonationFormTestCase):
+    form_class = forms.AuthorizeDonationForm

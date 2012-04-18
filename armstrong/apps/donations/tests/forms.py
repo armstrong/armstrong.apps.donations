@@ -298,7 +298,6 @@ class CreditCardDonationFormTestCase(TestCase):
 
     def test_can_configure_the_fields_to_strip(self):
         form = self.get_invalid_form()
-        form.strip_sensitive_info = True
         form.fields_to_strip = ["card_number", ]
         form.is_valid()
 

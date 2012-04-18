@@ -67,7 +67,7 @@ class AuthorizeNetBackend(object):
         start_date = u"%s" % ((today + datetime.timedelta(days=30))
                 .strftime("%Y-%m-%d"))
         api = self.get_recurring_api()
-        data = form.get_data_for_charge(donation.donor, recurring=True)
+        data = form.get_data_for_charge(donation, recurring=True)
         data.update({
             "amount": donation.amount,
             "interval_unit": arb.MONTHS_INTERVAL,
@@ -87,7 +87,7 @@ class AuthorizeNetBackend(object):
 
     def onetime_purchase(self, donation, form):
         api = self.get_api()
-        data = form.get_data_for_charge(donation.donor)
+        data = form.get_data_for_charge(donation)
         donor = donation.donor
         data.update({
             "amount": donation.amount,

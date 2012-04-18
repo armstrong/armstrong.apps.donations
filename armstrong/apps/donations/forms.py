@@ -133,12 +133,12 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
-    def get_data_for_charge(self, donor, **kwargs):
+    def get_data_for_charge(self, donation, **kwargs):
         raise NotImplementedError
 
 
 class AuthorizeDonationForm(CreditCardDonationForm):
-    def get_data_for_charge(self, donor, recurring=False):
+    def get_data_for_charge(self, donation, recurring=False):
         self.is_valid()
         card_number = "card_num" if not recurring else "card_number"
         data = {

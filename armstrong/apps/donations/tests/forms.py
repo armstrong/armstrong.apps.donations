@@ -274,13 +274,13 @@ class CreditCardDonationFormTestCase(TestCase):
 
     def assert_value_is_empty(self, field):
         form = self.get_invalid_form()
-        form.strip_sensitive_info = True
+        form.fields_to_strip = ["card_number", "ccv_code"]
         self.assertFalse(form.is_valid())
         self.assertEqual("", form[field].value())
 
     def assert_value_is_not_empty(self, field):
         form = self.get_invalid_form()
-        form.strip_sensitive_info = False
+        form.fields_to_strip = []
         self.assertFalse(form.is_valid())
         self.assertNotEqual("", form[field].value())
 

@@ -133,12 +133,11 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
-    strip_sensitive_info = True
     fields_to_strip = ["card_number", "ccv_code", ]
 
     def is_valid(self, *args, **kwargs):
         r = super(CreditCardDonationForm, self).is_valid(*args, **kwargs)
-        if not r and self.strip_sensitive_info:
+        if not r and self.fields_to_strip:
             empty_values = [""] * len(self.fields_to_strip)
             new_data = dict(zip(self.fields_to_strip, empty_values))
             self.data.update(new_data)

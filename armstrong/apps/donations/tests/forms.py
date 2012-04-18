@@ -290,6 +290,12 @@ class CreditCardDonationFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertNotEqual("", form[field].value())
 
+    def test_does_not_clear_card_numbers_if_form_is_invalid(self):
+        self.assert_value_is_not_empty("card_number")
+
+    def test_does_not_clear_ccv_codes_if_form_is_invalid(self):
+        self.assert_value_is_not_empty("ccv_code")
+
 
 class AuthorizeDonationFormTestCase(CreditCardDonationFormTestCase):
     form_class = forms.AuthorizeDonationForm

@@ -116,7 +116,19 @@ class BaseDonationForm(forms.Form):
         return donation
 
 
-class CreditCardDonationForm(BaseDonationForm):
+class StripSensitiveFields(object):
+    fields_to_strip = []
+
+    def is_valid(self, *args, **kwargs):
+        r = super(StripSensitiveFields, self).is_valid(*args, **kwargs)
+        if not r and self.fields_to_strip:
+            empty_values = [""] * len(self.fields_to_strip)
+            new_data = dict(zip(self.fields_to_strip, empty_values))
+            self.data.update(new_data)
+        return r
+
+
+class CreditCardDonationForm(StripSensitiveFields, BaseDonationForm):
     """
     Form representing the credit card donation process for Authorize.net
 
@@ -134,14 +146,6 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
     fields_to_strip = ["card_number", "ccv_code", ]
-
-    def is_valid(self, *args, **kwargs):
-        r = super(CreditCardDonationForm, self).is_valid(*args, **kwargs)
-        if not r and self.fields_to_strip:
-            empty_values = [""] * len(self.fields_to_strip)
-            new_data = dict(zip(self.fields_to_strip, empty_values))
-            self.data.update(new_data)
-        return r
 
     def get_data_for_charge(self, donor, **kwargs):
         raise NotImplementedError

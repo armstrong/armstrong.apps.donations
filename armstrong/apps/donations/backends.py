@@ -15,6 +15,19 @@ class Backend(object):
     def purchase(self, donation, form):
         raise NotImplementedError
 
+    def send_successful_purchase(self, donation, form, result):
+        """
+        Called by ``purchase`` after a donation has been succesfully
+        processed.
+
+        This function is used to trigger the ``successful_purchase``
+        signal while providing a flex point for developers to perform
+        an action based on the successful donation prior to the signal
+        being sent.
+        """
+        signals.successful_purchase.send(sender=self, donation=donation,
+                form=form, result=result)
+
 
 class AuthorizeNetBackend(Backend):
     def __init__(self, api_class=None, recurring_api_class=None,
@@ -56,19 +69,6 @@ class AuthorizeNetBackend(Backend):
     def get_recurring_api(self):
         return self.recurring_api_class(self.settings.AUTHORIZE["LOGIN"],
                 self.settings.AUTHORIZE["KEY"], is_test=self.testing)
-
-    def send_successful_purchase(self, donation, form, result):
-        """
-        Called by ``purchase`` after a donation has been succesfully
-        processed.
-
-        This function is used to trigger the ``successful_purchase``
-        signal while providing a flex point for developers to perform
-        an action based on the successful donation prior to the signal
-        being sent.
-        """
-        signals.successful_purchase.send(sender=self, donation=donation,
-                form=form, result=result)
 
     def recurring_purchase(self, donation, form):
         today = datetime.date.today()

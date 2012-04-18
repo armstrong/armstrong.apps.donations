@@ -25,6 +25,22 @@ class BackendTestCase(TestCase):
         self.assertRaises(NotImplementedError, backend.purchase,
                 donation, form)
 
+    def test_fires_donation_complete_on_successful_charge(self):
+        donation, form = self.random_donation_and_form
+        result = {
+            "status": True,
+            "random": random.randint(100, 200),
+        }
+        backend = backends.Backend()
+        signal = (fudge.Fake().expects_call()
+                .with_args(sender=backend, donation=donation,
+                        signal=arg.any(), form=form, result=result))
+        signals.successful_purchase.connect(signal)
+        backend.send_successful_purchase(donation, form, result)
+
+        fudge.verify()
+        signals.successful_purchase.disconnect(signal)
+
 
 class AuthorizeNetBackendTestCase(TestCase):
     def get_api_stub(self, response=None, reason_text=None, successful=True):

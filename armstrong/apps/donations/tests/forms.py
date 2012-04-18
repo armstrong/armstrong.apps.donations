@@ -268,9 +268,12 @@ class CreditCardDonationFormTestCase(TestCase):
     def get_form(self, *args, **kwargs):
         return self.form_class(*args, **kwargs)
 
-    def assert_value_is_empty(self, field):
+    def get_invalid_form(self):
         del self.data["amount"]
-        form = self.get_form(data=self.data)
+        return self.get_form(data=self.data)
+
+    def assert_value_is_empty(self, field):
+        form = self.get_invalid_form()
         form.strip_sensitive_info = True
         self.assertFalse(form.is_valid())
         self.assertEqual("", form[field].value())
@@ -280,3 +283,9 @@ class CreditCardDonationFormTestCase(TestCase):
 
     def test_clears_ccv_card_numbers_if_form_is_invalid(self):
         self.assert_value_is_empty("ccv_code")
+
+    def assert_value_is_not_empty(self, field):
+        form = self.get_invalid_form()
+        form.strip_sensitive_info = False
+        self.assertFalse(form.is_valid())
+        self.assertNotEqual("", form[field].value())

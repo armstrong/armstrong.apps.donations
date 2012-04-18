@@ -133,6 +133,17 @@ class CreditCardDonationForm(BaseDonationForm):
     expiration_month = forms.ChoiceField(choices=MONTH_CHOICES)
     expiration_year = forms.ChoiceField(choices=YEAR_CHOICES)
 
+    strip_sensitive_info = True
+
+    def is_valid(self, *args, **kwargs):
+        r = super(CreditCardDonationForm, self).is_valid(*args, **kwargs)
+        if not r and self.strip_sensitive_info:
+            self.data.update({
+                "card_number": "",
+                "ccv_code": "",
+            })
+        return r
+
     def get_data_for_charge(self, donor, **kwargs):
         raise NotImplementedError
 

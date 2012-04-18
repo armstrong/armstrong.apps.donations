@@ -252,18 +252,31 @@ class BaseDonationFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
 
 
-
-
 class CreditCardDonationFormTestCase(TestCase):
+    form_class = forms.CreditCardDonationForm
+
     def setUp(self):
-        data = self.get_base_random_data()
-        self.donor = self.random_donor
-        data = self.get_base_random_data(name=self.donor.name)
+        name_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(**name_kwargs)
         self.amount = data["amount"]
-        self.donation_form = forms.CreditCardDonationForm(data)
         self.card_number = data["card_number"]
         self.ccv_code = data["ccv_code"]
         self.expiration_month = data["expiration_month"]
         self.expiration_year = data["expiration_year"]
+        self.data = data
 
-    # TODO: test get_data_for_charge directly
+    def get_form(self, *args, **kwargs):
+        return self.form_class(*args, **kwargs)
+
+    def assert_value_is_empty(self, field):
+        del self.data["amount"]
+        form = self.get_form(data=self.data)
+        form.strip_sensitive_info = True
+        self.assertFalse(form.is_valid())
+        self.assertEqual("", form[field].value())
+
+    def test_clears_credit_card_numbers_if_form_is_invalid(self):
+        self.assert_value_is_empty("card_number")
+
+    def test_clears_ccv_card_numbers_if_form_is_invalid(self):
+        self.assert_value_is_empty("ccv_code")

@@ -90,9 +90,6 @@ class DonationFormView(TemplateView):
         context.update(kwargs)
         return context
 
-    def get(self, request, *args, **kwargs):
-        return self.render_to_response(self.get_context_data())
-
     def post(self, request, *args, **kwargs):
         donation_form = self.get_donation_form()
         if not donation_form.is_valid():

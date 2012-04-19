@@ -46,6 +46,7 @@ class AuthorizeNetBackend(object):
             result["recurring_response"] = response
         if result["status"]:
             donation.processed = True
+            donation.save()
             self.send_successful_purchase(donation, form, result)
         return result
 

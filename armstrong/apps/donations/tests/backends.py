@@ -11,6 +11,7 @@ from ._utils import TestCase
 
 from .. import backends
 from .. import forms
+from .. import models
 from .. import signals
 
 
@@ -330,6 +331,16 @@ class AuthorizeNetBackendTestCase(TestCase):
             backend.purchase(donation, donation_form)
 
         self.assertTrue(donation.processed)
+
+    def test_saves_donation_field_once_processed(self):
+        donation, donation_form = self.random_donation_and_form
+        self.assertFalse(donation.processed, msg="sanity check")
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "get_api", self.get_api_stub()):
+            backend.purchase(donation, donation_form)
+
+        d = models.Donation.objects.get(pk=donation.pk)
+        self.assertTrue(d.processed)
 
     def test_donation_processed_is_false_if_not_successfully_charged(self):
         stub = self.get_onetime_purchase_stub(successful=False)

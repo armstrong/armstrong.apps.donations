@@ -93,10 +93,10 @@ class DonationFormView(TemplateView):
     def post(self, request, *args, **kwargs):
         donation_form = self.get_donation_form()
         if not donation_form.is_valid():
-            return self.form_is_invalid()
+            return self.form_is_invalid(**kwargs)
         return self.form_is_valid(donation_form=donation_form)
 
-    def form_is_invalid(self):
+    def form_is_invalid(self, **kwargs):
         self.form_validation_failed = True
         return self.render_to_response(self.get_context_data())
 

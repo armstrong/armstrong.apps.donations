@@ -103,7 +103,7 @@ class DonationFormView(TemplateView):
 
     def form_is_valid(self, donation_form, **kwargs):
         if self.requires_confirmation:
-            context = self.get_context_data()
+            context = self.get_context_data(**kwargs)
             return self.render_to_response(context)
         donation = donation_form.save()
         response = backends.get_backend().purchase(donation, donation_form)

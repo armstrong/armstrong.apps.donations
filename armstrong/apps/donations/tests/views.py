@@ -150,6 +150,18 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         donation_form = view.get_donation_form()
         self.assertIsA(donation_form, forms.CreditCardDonationForm)
 
+    def test_get_context_turns_kwargs_into_params(self):
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+        view = self.get_view_object()
+        context = view.get_context_data(**random_kwargs)
+        self.assertEqual(len(context["params"]), len(random_kwargs),
+                msg="verify context.params is the same length")
+        for key in context["params"].keys():
+            self.assert_(key in random_kwargs)
+
 
 def form_is_valid_response(confirmed=False):
     def outer(func):

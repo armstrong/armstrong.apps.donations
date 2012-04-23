@@ -81,13 +81,13 @@ class DonationFormView(TemplateView):
         return donation_form_class(**self.get_donation_form_kwargs())
 
     def get_context_data(self, **kwargs):
+        context = super(DonationFormView, self).get_context_data(**kwargs)
         donation_form = self.get_donation_form()
-        context = {
+        context.update({
             "form_action_url": self.form_action_url,
             "donor_form": donation_form.donor_form,
             "donation_form": donation_form,
-        }
-        context.update(kwargs)
+        })
         return context
 
     def post(self, request, *args, **kwargs):

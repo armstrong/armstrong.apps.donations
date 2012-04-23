@@ -292,6 +292,27 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
     def test_redirects_on_confirmed(self, r):
         self.assertIsA(r, HttpResponseRedirect)
 
+    def test_post_passes_kwargs_to_form_is_valid(self):
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+        donation_form = fudge.Fake()
+        donation_form.provides("is_valid").returns(True)
+        get_donation_form = fudge.Fake()
+        get_donation_form.is_callable().returns(donation_form)
+
+        form_is_valid = fudge.Fake()
+        form_is_valid.expects_call().with_args(donation_form=donation_form,
+                **random_kwargs)
+        view = self.post_view
+        with fudge.patched_context(view, "get_donation_form",
+                get_donation_form):
+            with fudge.patched_context(view, "form_is_valid", form_is_valid):
+                view.post({}, **random_kwargs)
+
+        fudge.verify()
+
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
     @property

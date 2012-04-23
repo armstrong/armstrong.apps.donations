@@ -81,31 +81,28 @@ class DonationFormView(TemplateView):
         return donation_form_class(**self.get_donation_form_kwargs())
 
     def get_context_data(self, **kwargs):
+        context = super(DonationFormView, self).get_context_data(**kwargs)
         donation_form = self.get_donation_form()
-        context = {
+        context.update({
             "form_action_url": self.form_action_url,
             "donation_form": donation_form,
-        }
-        context.update(kwargs)
+            "confirmation_required": self.requires_confirmation,
+        })
         return context
-
-    def get(self, request, *args, **kwargs):
-        return self.render_to_response(self.get_context_data())
 
     def post(self, request, *args, **kwargs):
         donation_form = self.get_donation_form()
         if not donation_form.is_valid():
-            return self.form_is_invalid()
-        return self.form_is_valid(donation_form=donation_form)
+            return self.form_is_invalid(**kwargs)
+        return self.form_is_valid(donation_form=donation_form, **kwargs)
 
-    def form_is_invalid(self):
+    def form_is_invalid(self, **kwargs):
         self.form_validation_failed = True
-        return self.render_to_response(self.get_context_data())
+        return self.render_to_response(self.get_context_data(**kwargs))
 
-    def form_is_valid(self, donation_form):
+    def form_is_valid(self, donation_form, **kwargs):
         if self.requires_confirmation:
-            context = {"confirmation_required": True}
-            context.update(self.get_context_data())
+            context = self.get_context_data(**kwargs)
             return self.render_to_response(context)
         donation = donation_form.save()
         response = backends.get_backend().purchase(donation, donation_form)

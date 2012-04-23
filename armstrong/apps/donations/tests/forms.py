@@ -252,18 +252,58 @@ class BaseDonationFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
 
 
-
-
 class CreditCardDonationFormTestCase(TestCase):
+    form_class = forms.CreditCardDonationForm
+
     def setUp(self):
-        data = self.get_base_random_data()
-        self.donor = self.random_donor
-        data = self.get_base_random_data(name=self.donor.name)
+        name_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(**name_kwargs)
         self.amount = data["amount"]
-        self.donation_form = forms.CreditCardDonationForm(data)
         self.card_number = data["card_number"]
         self.ccv_code = data["ccv_code"]
         self.expiration_month = data["expiration_month"]
         self.expiration_year = data["expiration_year"]
+        self.data = data
 
-    # TODO: test get_data_for_charge directly
+    def get_form(self, *args, **kwargs):
+        return self.form_class(*args, **kwargs)
+
+    def get_invalid_form(self):
+        del self.data["amount"]
+        return self.get_form(data=self.data)
+
+    def assert_value_is_empty(self, field):
+        form = self.get_invalid_form()
+        form.fields_to_strip = ["card_number", "ccv_code"]
+        self.assertFalse(form.is_valid())
+        self.assertEqual("", form[field].value())
+
+    def assert_value_is_not_empty(self, field):
+        form = self.get_invalid_form()
+        form.fields_to_strip = []
+        self.assertFalse(form.is_valid())
+        self.assertNotEqual("", form[field].value())
+
+    def test_clears_credit_card_numbers_if_form_is_invalid(self):
+        self.assert_value_is_empty("card_number")
+
+    def test_clears_ccv_card_numbers_if_form_is_invalid(self):
+        self.assert_value_is_empty("ccv_code")
+
+    def test_does_not_clear_card_numbers_if_form_is_invalid(self):
+        self.assert_value_is_not_empty("card_number")
+
+    def test_does_not_clear_ccv_codes_if_form_is_invalid(self):
+        self.assert_value_is_not_empty("ccv_code")
+
+    def test_can_configure_the_fields_to_strip(self):
+        form = self.get_invalid_form()
+        form.fields_to_strip = ["card_number", ]
+        form.is_valid()
+
+        self.assertEqual("", form["card_number"].value())
+        self.assertNotEqual("", form["ccv_code"].value())
+
+
+class AuthorizeDonationFormTestCase(CreditCardDonationFormTestCase):
+    form_class = forms.AuthorizeDonationForm

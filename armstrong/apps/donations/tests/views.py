@@ -203,6 +203,29 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
 
         fudge.verify()
 
+    def test_form_is_valid_passes_kwargs_to_purchase_failed(self):
+        donation, donation_form = self.random_donation_and_form
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+
+        view = self.post_view
+        view.confirm = False
+        backends = self.get_backend_stub(successful=False)
+        backend_response = backends.get_backend().purchase()
+
+        purchase_failed = fudge.Fake()
+        purchase_failed.expects_call().with_args(backend_response,
+                **random_kwargs)
+
+        with fudge.patched_context(views, "backends", backends):
+            with fudge.patched_context(view, "purchase_failed",
+                    purchase_failed):
+                view.form_is_valid(donation_form, **random_kwargs)
+
+        fudge.verify()
+
 
 def form_is_valid_response(confirmed=False):
     def outer(func):

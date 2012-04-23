@@ -107,7 +107,7 @@ class DonationFormView(TemplateView):
         donation = donation_form.save()
         response = backends.get_backend().purchase(donation, donation_form)
         if not response["status"]:
-            return self.purchase_failed(response)
+            return self.purchase_failed(response, **kwargs)
         return HttpResponseRedirect(self.success_url)
 
     def purchase_failed(self, backend_response):

@@ -8,7 +8,6 @@ from functools import wraps
 import fudge
 import os
 import random
-from unittest import expectedFailure
 
 from ._utils import TestCase
 

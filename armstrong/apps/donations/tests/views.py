@@ -226,6 +226,27 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
 
         fudge.verify()
 
+    def test_purchase_failed_passes_kwargs_to_get_context_data(self):
+        backend_response = {
+            "reason": "Some Random Reason",
+            "response": "Some Random Response",
+        }
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+
+        get_context_data = fudge.Fake()
+        (get_context_data.expects_call()
+                .with_args(**random_kwargs)
+                .returns({}))
+
+        view = self.post_view
+        with fudge.patched_context(view, "get_context_data", get_context_data):
+            view.purchase_failed(backend_response, **random_kwargs)
+
+        fudge.verify()
+
 
 def form_is_valid_response(confirmed=False):
     def outer(func):

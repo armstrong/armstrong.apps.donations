@@ -7,7 +7,14 @@ from .. import forms
 from .. import models
 
 
-class BaseDonationFormTestCase(TestCase):
+class DjangoFormAssertionsMixin(object):
+    def assert_field_error(self, form, field_name):
+        self.assertFalse(form.is_valid(), msg="sanity check")
+        self.assert_(field_name in form.errors,
+                msg="%s not in form errors" % field_name)
+
+
+class BaseDonationFormTestCase(DjangoFormAssertionsMixin, TestCase):
     def test_attribution_is_stored(self):
         random_attribution = "Random Attribution %d" % random.randint(100, 200)
         data = self.get_base_random_data()
@@ -250,6 +257,18 @@ class BaseDonationFormTestCase(TestCase):
 
         form = MyAwesomeForm(data=data)
         self.assertFalse(form.is_valid())
+
+    def test_has_a_donor_form_property(self):
+        form = forms.BaseDonationForm()
+        self.assertIsA(form.donor_form, forms.DonorForm)
+
+    def test_is_valid_returns_false_if_donor_form_invalid_donor(self):
+        for field_name in ["first_name", "last_name", ]:
+            data = self.get_base_random_data()
+            del data[field_name]
+            form = forms.BaseDonationForm(data=data)
+            self.assertFalse(form.is_valid())
+            self.assert_field_error(form.donor_form, field_name)
 
 
 class CreditCardDonationFormTestCase(TestCase):

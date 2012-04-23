@@ -85,7 +85,6 @@ class DonationFormView(TemplateView):
         donation_form = self.get_donation_form()
         context.update({
             "form_action_url": self.form_action_url,
-            "donor_form": donation_form.donor_form,
             "donation_form": donation_form,
             "confirmation_required": self.requires_confirmation,
         })
@@ -108,14 +107,14 @@ class DonationFormView(TemplateView):
         donation = donation_form.save()
         response = backends.get_backend().purchase(donation, donation_form)
         if not response["status"]:
-            return self.purchase_failed(response)
+            return self.purchase_failed(response, **kwargs)
         return HttpResponseRedirect(self.success_url)
 
-    def purchase_failed(self, backend_response):
-        context = {
+    def purchase_failed(self, backend_response, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context.update({
             "error_msg": "Unable to process payment",
             "reason": backend_response["reason"],
             "response": backend_response["response"],
-        }
-        context.update(self.get_context_data())
+        })
         return self.render_to_response(context)

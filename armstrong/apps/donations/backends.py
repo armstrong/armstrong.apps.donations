@@ -8,7 +8,57 @@ from . import forms
 from . import signals
 
 
-class AuthorizeNetBackend(object):
+class Backend(object):
+    """
+    Provides a backend that shows the methods required for a valid backend
+
+    Backends must provide the two methods shown in this class in order to be
+    able to process incoming donations.
+    """
+
+    def get_form_class(self):
+        """
+        Returns the form class this backend can process
+
+        You *must* implement this method on any backends you create.
+
+        You can use this to provide a custom form for each backend that adds
+        behavior specific to that backend.  For example, the
+        ``AuthorizeNetBackend`` provides various methods of representing credit
+        card information depending on the context.  Using this method, it
+        provides a custom ``forms.AuthorizeDonationForm`` that is capable of
+        extracting that data.
+        """
+        raise NotImplementedError
+
+    def purchase(self, donation, form):
+        """
+        Finalizes the donation by processing the created donation
+
+        You *must* implement this method on any backends you create.
+
+        This takes both a ``Donation`` model instance and an instance of the
+        form returned by ``get_form_class``.  It should handle any
+        communication with the processing gateway and should mark
+        ``donation.processed`` as ``True`` once it's successfully completed.
+        """
+        raise NotImplementedError
+
+    def send_successful_purchase(self, donation, form, result):
+        """
+        Called by ``purchase`` after a donation has been succesfully
+        processed.
+
+        This function is used to trigger the ``successful_purchase``
+        signal while providing a flex point for developers to perform
+        an action based on the successful donation prior to the signal
+        being sent.
+        """
+        signals.successful_purchase.send(sender=self, donation=donation,
+                form=form, result=result)
+
+
+class AuthorizeNetBackend(Backend):
     def __init__(self, api_class=None, recurring_api_class=None,
             settings=None, testing=None):
         if api_class is None:
@@ -24,15 +74,6 @@ class AuthorizeNetBackend(object):
             testing = getattr(self.settings, "ARMSTRONG_DONATIONS_TESTING",
                     False)
         self.testing = testing
-
-    def get_api(self):
-        return self.api_class(self.settings.AUTHORIZE["LOGIN"],
-                self.settings.AUTHORIZE["KEY"], delimiter=u"|",
-                is_test=self.testing)
-
-    def get_recurring_api(self):
-        return self.recurring_api_class(self.settings.AUTHORIZE["LOGIN"],
-                self.settings.AUTHORIZE["KEY"], is_test=self.testing)
 
     def get_form_class(self):
         return forms.AuthorizeDonationForm
@@ -50,25 +91,21 @@ class AuthorizeNetBackend(object):
             self.send_successful_purchase(donation, form, result)
         return result
 
-    def send_successful_purchase(self, donation, form, result):
-        """
-        Called by ``purchase`` after a donation has been succesfully
-        processed.
+    def get_api(self):
+        return self.api_class(self.settings.AUTHORIZE["LOGIN"],
+                self.settings.AUTHORIZE["KEY"], delimiter=u"|",
+                is_test=self.testing)
 
-        This function is used to trigger the ``successful_purchase``
-        signal while providing a flex point for developers to perform
-        an action based on the successful donation prior to the signal
-        being sent.
-        """
-        signals.successful_purchase.send(sender=self, donation=donation,
-                form=form, result=result)
+    def get_recurring_api(self):
+        return self.recurring_api_class(self.settings.AUTHORIZE["LOGIN"],
+                self.settings.AUTHORIZE["KEY"], is_test=self.testing)
 
     def recurring_purchase(self, donation, form):
         today = datetime.date.today()
         start_date = u"%s" % ((today + datetime.timedelta(days=30))
                 .strftime("%Y-%m-%d"))
         api = self.get_recurring_api()
-        data = form.get_data_for_charge(donation.donor, recurring=True)
+        data = form.get_data_for_charge(donation, recurring=True)
         data.update({
             "amount": donation.amount,
             "interval_unit": arb.MONTHS_INTERVAL,
@@ -88,7 +125,7 @@ class AuthorizeNetBackend(object):
 
     def onetime_purchase(self, donation, form):
         api = self.get_api()
-        data = form.get_data_for_charge(donation.donor)
+        data = form.get_data_for_charge(donation)
         donor = donation.donor
         data.update({
             "amount": donation.amount,

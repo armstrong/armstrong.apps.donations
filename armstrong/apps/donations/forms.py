@@ -15,6 +15,12 @@ if hasattr(settings, "ARMSTRONG_INITIAL_STATE"):
 
 
 class BaseDonationForm(forms.Form):
+    """
+    Provides the basic fields common to all donation forms
+
+    This is meant to be overridden by the forms returned by a
+    ``Backend.get_form_class`` to provide specific implementations.
+    """
     first_name = forms.CharField()
     last_name = forms.CharField()
     amount = forms.DecimalField(decimal_places=2)
@@ -117,6 +123,12 @@ class BaseDonationForm(forms.Form):
 
 
 class StripSensitiveFields(object):
+    """
+    Mixin for stripping sensitive information from an invalid form
+
+    This is meant to be used by a ``Form`` object and strips the fields
+    listed in ``fields_to_strip`` if ``is_valid`` fails.
+    """
     fields_to_strip = []
 
     def is_valid(self, *args, **kwargs):
@@ -147,12 +159,25 @@ class CreditCardDonationForm(StripSensitiveFields, BaseDonationForm):
 
     fields_to_strip = ["card_number", "ccv_code", ]
 
-    def get_data_for_charge(self, donor, **kwargs):
+    def get_data_for_charge(self, donation, **kwargs):
+        """
+        Returns the data for charges
+
+        This is used to build a dictionary of data that can not be
+        retrieved directly from the ``Donation`` model.
+        """
         raise NotImplementedError
 
 
 class AuthorizeDonationForm(CreditCardDonationForm):
-    def get_data_for_charge(self, donor, recurring=False):
+    """
+    Represents a ``CreditCardDonationForm`` form for Authorize.net
+
+    This form is returned by the ``AuthorizeNetBackend.get_form_class``
+    and should not be accessed directly.
+    """
+    def get_data_for_charge(self, donation, recurring=False):
+        """Returns the data for charges"""
         self.is_valid()
         card_number = "card_num" if not recurring else "card_number"
         data = {
@@ -172,12 +197,14 @@ class AuthorizeDonationForm(CreditCardDonationForm):
 
 
 class DonorForm(forms.ModelForm):
+    """Simple ``ModelForm`` for the ``Donor`` model"""
     class Meta:
         model = models.Donor
         excludes = ("address", "mailing_address", )
 
 
 class DonorAddressForm(forms.ModelForm):
+    """Simple ``ModelForm`` for the ``DonorAddress`` model"""
     address = forms.CharField(widget=forms.Textarea)
 
     class Meta:

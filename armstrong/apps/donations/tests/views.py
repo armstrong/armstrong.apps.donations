@@ -8,7 +8,6 @@ from functools import wraps
 import fudge
 import os
 import random
-from unittest import expectedFailure
 
 from ._utils import TestCase
 
@@ -151,10 +150,6 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         self.assert_value_in_context(response, "form_action_url", "")
 
     @get_response
-    def test_adds_donor_form_to_context(self, response):
-        self.assert_type_in_context(response, "donor_form", forms.DonorForm)
-
-    @get_response
     def test_adds_donation_formset_to_context(self, response):
         self.assert_type_in_context(response, "donation_form",
                 forms.BaseDonationForm)
@@ -205,6 +200,50 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         view = self.post_view
         with fudge.patched_context(view, "get_context_data", get_context_data):
             view.form_is_valid(donation_form, **random_kwargs)
+
+        fudge.verify()
+
+    def test_form_is_valid_passes_kwargs_to_purchase_failed(self):
+        donation, donation_form = self.random_donation_and_form
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+
+        view = self.post_view
+        view.confirm = False
+        backends = self.get_backend_stub(successful=False)
+        backend_response = backends.get_backend().purchase()
+
+        purchase_failed = fudge.Fake()
+        purchase_failed.expects_call().with_args(backend_response,
+                **random_kwargs)
+
+        with fudge.patched_context(views, "backends", backends):
+            with fudge.patched_context(view, "purchase_failed",
+                    purchase_failed):
+                view.form_is_valid(donation_form, **random_kwargs)
+
+        fudge.verify()
+
+    def test_purchase_failed_passes_kwargs_to_get_context_data(self):
+        backend_response = {
+            "reason": "Some Random Reason",
+            "response": "Some Random Response",
+        }
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+
+        get_context_data = fudge.Fake()
+        (get_context_data.expects_call()
+                .with_args(**random_kwargs)
+                .returns({}))
+
+        view = self.post_view
+        with fudge.patched_context(view, "get_context_data", get_context_data):
+            view.purchase_failed(backend_response, **random_kwargs)
 
         fudge.verify()
 
@@ -448,13 +487,6 @@ class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):
         data = self.random_post_data
         response = self.client.post(self.url, data)
         self.assertRedirects(response, reverse("donations_thanks"))
-
-    def test_displays_errors_on_donor_validation_error(self):
-        data = self.random_post_data
-        del data["first_name"]
-        response = self.client.post(self.url, data)
-        self.assert_template("armstrong/donations/donation.html", response)
-        self.assert_form_has_errors(response, "donor_form", ["first_name", ])
 
     def test_displays_error_on_donation_form_validation_error(self):
         data = self.random_post_data

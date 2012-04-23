@@ -6,9 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class DonorAddress(models.Model):
-    """
-    Address associated with a ``Donor``
-    """
+    """Address associated with a ``Donor``"""
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=20)
     state = us.USStateField()
@@ -19,6 +17,12 @@ class DonorAddress(models.Model):
 
 
 class Donor(models.Model):
+    """
+    Represents a ``Donor`` associated with a ``Donation``
+
+    This may or may not have an associated ``User`` with it, but
+    should have one or more ``Donation`` associated with it.
+    """
     user = models.ForeignKey(User, blank=True, null=True)
     first_name = models.CharField(max_length=250)
     last_name = models.CharField(max_length=250)
@@ -43,6 +47,12 @@ class Donor(models.Model):
 
 
 class DonationType(models.Model):
+    """
+    Provides a mechanism for creating types of donations
+
+    Each ``DonationType`` has one or more ``DonationTypeOption`` which
+    contains the actual data (amount, length, number of repeats, and so on).
+    """
     name = models.CharField(
         max_length=100, help_text=_(u"Name of Donation Type")
     )
@@ -52,6 +62,7 @@ class DonationType(models.Model):
 
 
 class DonationTypeOption(models.Model):
+    """Provides specifics for a particular option of a ``DonationType``"""
     donation_type = models.ForeignKey(DonationType, related_name="options")
     amount = models.PositiveIntegerField(help_text=_(u"Amount to donate"))
     length = models.PositiveIntegerField(default=1,
@@ -76,6 +87,7 @@ class DonationTypeOption(models.Model):
 
 
 class PromoCode(models.Model):
+    """Codes that can be applied to a ``Donation`` to adjust its amount"""
     code = models.CharField(max_length=20, unique=True)
     amount = models.FloatField(
         help_text=_("Percent discount: 0 is no discount, 100 if free")
@@ -90,6 +102,7 @@ class PromoCode(models.Model):
 
 
 class Donation(models.Model):
+    """Model representing the actual donation"""
     donor = models.ForeignKey(Donor)
     donation_type = models.ForeignKey(DonationTypeOption, null=True,
             blank=True)

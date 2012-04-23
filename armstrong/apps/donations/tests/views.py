@@ -121,6 +121,21 @@ class BaseDonationFormViewTestCase(TestCase):
         self.assertEqual(200, response.status_code, msg="sanity check")
         return response
 
+    def get_fake_post_request(self, confirmed=False):
+        d = {} if not confirmed else {"confirmed": u"1"}
+        return self.factory.post(self.url, d)
+
+    @property
+    def fake_get_request(self):
+        return self.factory.get(self.url)
+
+    def get_post_view(self, confirmed=False):
+        v = views.DonationFormView(confirm=True)
+        v.request = self.get_fake_post_request(confirmed=confirmed)
+        return v
+
+    post_view = property(get_post_view)
+
 
 # TODO: move to armstrong.dev
 def get_response(func):
@@ -150,6 +165,49 @@ class DonationFormViewGetTestCase(BaseDonationFormViewTestCase):
         donation_form = view.get_donation_form()
         self.assertIsA(donation_form, forms.CreditCardDonationForm)
 
+    def test_get_context_turns_kwargs_into_params(self):
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+        view = self.get_view_object()
+        context = view.get_context_data(**random_kwargs)
+        self.assertEqual(len(context["params"]), len(random_kwargs),
+                msg="verify context.params is the same length")
+        for key in context["params"].keys():
+            self.assert_(key in random_kwargs)
+
+    def test_form_is_invalid_passes_kwargs_to_get_context_data(self):
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+
+        get_context_data = fudge.Fake()
+        get_context_data.expects_call().with_args(**random_kwargs)
+
+        view = self.post_view
+        with fudge.patched_context(view, "get_context_data", get_context_data):
+            view.post({}, **random_kwargs)
+
+        fudge.verify()
+
+    def test_form_is_valid_passes_kwargs_to_get_context_data(self):
+        donation, donation_form = self.random_donation_and_form
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+
+        get_context_data = fudge.Fake()
+        get_context_data.expects_call().with_args(**random_kwargs)
+
+        view = self.post_view
+        with fudge.patched_context(view, "get_context_data", get_context_data):
+            view.form_is_valid(donation_form, **random_kwargs)
+
+        fudge.verify()
+
 
 def form_is_valid_response(confirmed=False):
     def outer(func):
@@ -167,21 +225,6 @@ def form_is_valid_response(confirmed=False):
 
 class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
     view_name = "donations_form_confirm"
-
-    def get_fake_post_request(self, confirmed=False):
-        d = {} if not confirmed else {"confirmed": u"1"}
-        return self.factory.post(self.url, d)
-
-    @property
-    def fake_get_request(self):
-        return self.factory.get(self.url)
-
-    def get_post_view(self, confirmed=False):
-        v = views.DonationFormView(confirm=True)
-        v.request = self.get_fake_post_request(confirmed=confirmed)
-        return v
-
-    post_view = property(get_post_view)
 
     def test_use_confirm_template_false_by_default(self):
         v = views.DonationFormView()
@@ -241,6 +284,50 @@ class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
     @form_is_valid_response(confirmed=True)
     def test_redirects_on_confirmed(self, r):
         self.assertIsA(r, HttpResponseRedirect)
+
+    def test_form_is_invalid_receives_kwargs_from_post(self):
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+
+        donation_form = fudge.Fake()
+        donation_form.provides("is_valid").returns(False)
+        get_donation_form = fudge.Fake()
+        get_donation_form.is_callable().returns(donation_form)
+
+        form_is_invalid = fudge.Fake()
+        form_is_invalid.expects_call().with_args(**random_kwargs)
+
+        view = self.post_view
+        with fudge.patched_context(view, "get_donation_form",
+                get_donation_form):
+            with fudge.patched_context(view, "form_is_invalid",
+                    form_is_invalid):
+                view.post({}, **random_kwargs)
+
+        fudge.verify()
+
+    def test_post_passes_kwargs_to_form_is_valid(self):
+        r = lambda: random.randint(100, 200)
+        random_kwargs = {
+            "slug%d" % r(): "foo-%d" % r(),
+        }
+        donation_form = fudge.Fake()
+        donation_form.provides("is_valid").returns(True)
+        get_donation_form = fudge.Fake()
+        get_donation_form.is_callable().returns(donation_form)
+
+        form_is_valid = fudge.Fake()
+        form_is_valid.expects_call().with_args(donation_form=donation_form,
+                **random_kwargs)
+        view = self.post_view
+        with fudge.patched_context(view, "get_donation_form",
+                get_donation_form):
+            with fudge.patched_context(view, "form_is_valid", form_is_valid):
+                view.post({}, **random_kwargs)
+
+        fudge.verify()
 
 
 class DonationFormViewPostTestCase(BaseDonationFormViewTestCase):

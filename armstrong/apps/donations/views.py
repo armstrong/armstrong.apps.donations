@@ -98,7 +98,7 @@ class DonationFormView(TemplateView):
 
     def form_is_invalid(self, **kwargs):
         self.form_validation_failed = True
-        return self.render_to_response(self.get_context_data())
+        return self.render_to_response(self.get_context_data(**kwargs))
 
     def form_is_valid(self, donation_form):
         if self.requires_confirmation:

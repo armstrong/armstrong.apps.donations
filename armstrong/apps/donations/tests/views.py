@@ -121,6 +121,21 @@ class BaseDonationFormViewTestCase(TestCase):
         self.assertEqual(200, response.status_code, msg="sanity check")
         return response
 
+    def get_fake_post_request(self, confirmed=False):
+        d = {} if not confirmed else {"confirmed": u"1"}
+        return self.factory.post(self.url, d)
+
+    @property
+    def fake_get_request(self):
+        return self.factory.get(self.url)
+
+    def get_post_view(self, confirmed=False):
+        v = views.DonationFormView(confirm=True)
+        v.request = self.get_fake_post_request(confirmed=confirmed)
+        return v
+
+    post_view = property(get_post_view)
+
 
 # TODO: move to armstrong.dev
 def get_response(func):
@@ -179,21 +194,6 @@ def form_is_valid_response(confirmed=False):
 
 class DonationFormViewPostWithConfirmTestCase(BaseDonationFormViewTestCase):
     view_name = "donations_form_confirm"
-
-    def get_fake_post_request(self, confirmed=False):
-        d = {} if not confirmed else {"confirmed": u"1"}
-        return self.factory.post(self.url, d)
-
-    @property
-    def fake_get_request(self):
-        return self.factory.get(self.url)
-
-    def get_post_view(self, confirmed=False):
-        v = views.DonationFormView(confirm=True)
-        v.request = self.get_fake_post_request(confirmed=confirmed)
-        return v
-
-    post_view = property(get_post_view)
 
     def test_use_confirm_template_false_by_default(self):
         v = views.DonationFormView()

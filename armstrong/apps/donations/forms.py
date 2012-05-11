@@ -144,6 +144,7 @@ class StripSensitiveFields(object):
         if not r and self.fields_to_strip:
             empty_values = [""] * len(self.fields_to_strip)
             new_data = dict(zip(self.fields_to_strip, empty_values))
+            self.data = copy(self.data)
             self.data.update(new_data)
         return r
 

@@ -1,5 +1,7 @@
+from django.http import QueryDict
 import fudge
 import random
+from urllib import urlencode
 from ._utils import TestCase
 
 from .. import constants
@@ -304,6 +306,7 @@ class CreditCardDonationFormTestCase(TestCase):
 
     def assert_value_is_empty(self, field):
         form = self.get_invalid_form()
+        form.data = QueryDict(urlencode(form.data))
         form.fields_to_strip = ["card_number", "ccv_code"]
         self.assertFalse(form.is_valid())
         self.assertEqual("", form[field].value())

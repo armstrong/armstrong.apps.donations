@@ -1,3 +1,4 @@
+from copy import copy
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -69,15 +70,22 @@ class BaseDonationForm(forms.Form):
         }
 
     def is_valid(self, donation_only=False):
-        donation_is_valid = super(BaseDonationForm, self).is_valid()
+        parent = super(BaseDonationForm, self)
+        donation_is_valid = parent.is_valid()
         if not donation_is_valid and "amount" in self.errors:
             donation_type_field = self.add_prefix("donation_type_pk")
             if donation_type_field in self.data:
                 donation_type_pk = self.data[donation_type_field]
                 try:
-                    models.DonationTypeOption.objects.get(pk=donation_type_pk)
-                    del self.errors["amount"]
-                    donation_is_valid = len(self.errors) is 0
+                    dt = models.DonationTypeOption.objects.get(pk=donation_type_pk)
+
+                    # We've made it this far, so create a copy of the data (which is
+                    # most likely an immutable `QueryDict`) and adjust the amount to
+                    # the correct value before re-running is_valid().
+                    self.data = copy(self.data)
+                    self.data["amount"] = dt.amount
+                    self._errors = None
+                    donation_is_valid = parent.is_valid()
                 except models.DonationTypeOption.DoesNotExist:
                     donation_is_valid = False
 

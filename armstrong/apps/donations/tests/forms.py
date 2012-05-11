@@ -224,6 +224,17 @@ class BaseDonationFormTestCase(DjangoFormAssertionsMixin, TestCase):
         form = forms.BaseDonationForm(data=data)
         self.assertTrue(form.is_valid())
 
+    def test_cleaned_data_is_available_with_dt_and_no_amount(self):
+        donation_type = self.random_type
+        address_kwargs = self.random_address_kwargs
+        data = self.get_base_random_data(donation_type_pk=donation_type.pk)
+        data.update(self.prefix_data(address_kwargs), prefix="billing")
+        del data["amount"]
+
+        form = forms.BaseDonationForm(data=data)
+        form.is_valid()
+        self.assertEqual(form.cleaned_data["amount"], donation_type.amount)
+
     def test_is_valid_returns_false_with_invalid_donation_type(self):
         address_kwargs = self.random_address_kwargs
         data = self.get_base_random_data(

@@ -127,9 +127,13 @@ class AuthorizeNetBackend(Backend):
         api = self.get_api()
         data = form.get_data_for_charge(donation)
         donor = donation.donor
+        if donation.donation_type:
+            description = u"Membership: %s" % donation.donation_type.name
+        else:
+            description = u"Donation: $%d" % donation.amount
         data.update({
             "amount": donation.amount,
-            "description": u"Donation: $%d" % donation.amount,
+            "description": description,
             "first_name": unicode(donor.first_name),
             "last_name": unicode(donor.last_name),
 

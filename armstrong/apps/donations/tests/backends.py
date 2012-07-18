@@ -245,7 +245,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 exp_date=u"%02d-%04d" % (
                         int(donation_form.cleaned_data["expiration_month"]),
                         int(donation_form.cleaned_data["expiration_year"])),
-                description=u"Membership: %s" % donation.donation_type.name,
+                description=u"Membership: %s (Repeats 10000)" % \
+                        donation.donation_type.name,
                 first_name=unicode(donation.donor.first_name),
                 last_name=unicode(donation.donor.last_name),
                 address=donation.donor.address.address,
@@ -260,6 +261,33 @@ class AuthorizeNetBackendTestCase(TestCase):
             backend.purchase(donation, donation_form)
         fudge.verify()
 
+    def test_dont_include_repeats_suffix_if_one_time(self):
+        donation, donation_form = self.random_donation_and_form
+        donation.donation_type = self.random_monthly_type
+        donation.donation_type.repeat = 0
+
+        api = fudge.Fake("api")
+        api.expects("transaction").with_args(
+                amount=donation.amount,
+                card_num=donation_form.cleaned_data["card_number"],
+                card_code=donation_form.cleaned_data["ccv_code"],
+                exp_date=u"%02d-%04d" % (
+                        int(donation_form.cleaned_data["expiration_month"]),
+                        int(donation_form.cleaned_data["expiration_year"])),
+                description=u"Membership: %s" % donation.donation_type.name,
+                first_name=unicode(donation.donor.first_name),
+                last_name=unicode(donation.donor.last_name),
+                address=donation.donor.address.address,
+                city=donation.donor.address.city,
+                state=donation.donor.address.state,
+                zip=donation.donor.address.zipcode,
+        ).returns({"reason_code": u"1", "reason_text": u"Some random Reason"})
+        get_api = fudge.Fake().expects_call().returns(api)
+
+        backend = backends.AuthorizeNetBackend()
+        with fudge.patched_context(backend, "get_api", get_api):
+            backend.purchase(donation, donation_form)
+        fudge.verify()
 
     def test_adds_test_request_to_kwargs_if_in_testing_mode(self):
         donation, donation_form = self.random_donation_and_form

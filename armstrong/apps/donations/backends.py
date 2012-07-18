@@ -128,7 +128,10 @@ class AuthorizeNetBackend(Backend):
         data = form.get_data_for_charge(donation)
         donor = donation.donor
         if donation.donation_type:
-            description = u"Membership: %s" % donation.donation_type.name
+            repeats = int(donation.donation_type.repeat + 1)
+            suffix = " (Repeats %d)" % repeats
+            description = u"Membership: %s%s" % (
+                    donation.donation_type.name, suffix)
         else:
             description = u"Donation: $%d" % donation.amount
         data.update({

@@ -245,7 +245,8 @@ class AuthorizeNetBackendTestCase(TestCase):
                 exp_date=u"%02d-%04d" % (
                         int(donation_form.cleaned_data["expiration_month"]),
                         int(donation_form.cleaned_data["expiration_year"])),
-                description=u"Membership: %s" % donation.donation_type.name,
+                description=u"Membership: %s (Repeats 10000)" % \
+                        donation.donation_type.name,
                 first_name=unicode(donation.donor.first_name),
                 last_name=unicode(donation.donor.last_name),
                 address=donation.donor.address.address,

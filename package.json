@@ -4,7 +4,7 @@
     "description": "Provides a framework for accepting donations",
     "install_requires": [
         "authorize==0.1.0",
-        "Django>=1.3,<=1.4.4",
+        "Django>=1.3,<=1.4.5",
         "armstrong.utils.backends>=1.0.0,<2.0"
     ]
 }

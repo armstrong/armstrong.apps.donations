@@ -1,6 +1,9 @@
 from decimal import Decimal
 from django.contrib.auth.models import User
-from django.contrib.localflavor.us import models as us
+try:
+    from django.contrib.localflavor.us import models as us
+except ImportError:
+    from localflavor.us import models as us  # Django 1.6+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
